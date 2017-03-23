@@ -1,0 +1,45 @@
+# This file exists so you can easily regenerate your project.
+#
+# `cookiepatcher` is a convenient shim around `cookiecutter`
+# for regenerating projects (it will generate a .cookiecutterrc
+# automatically for any template). To use it:
+#
+#    pip install cookiepatcher
+#    cookiepatcher gh:ionelmc/cookiecutter-pylibrary project-path
+#
+# See:
+#    https://pypi.python.org/pypi/cookiecutter
+#
+# Alternatively, you can run:
+#
+#    cookiecutter --overwrite-if-exists --config-file=project-path/.cookiecutterrc gh:ionelmc/cookiecutter-pylibrary
+
+default_context:
+
+    appveyor:                        'no'
+    codacy:                          'yes'
+    codeclimate:                     'no'
+    codecov:                         'no'
+    command_line_interface:          'no'
+    command_line_interface_bin_name: 'django-appsettings'
+    coveralls:                       'no'
+    distribution_name:               'django-appsettings'
+    django:                          'yes'
+    django_fake_model:               'no'
+    django_versions:                 '1.8,1.9,1.10'
+    email:                           'timothee.mazzucotelli@gmail.com'
+    full_name:                       'Timothee Mazzucotelli'
+    github_username:                 'Pawamoy'
+    gitter:                          'yes'
+    landscape:                       'no'
+    package_name:                    'appsettings'
+    project_name:                    'Django AppSettings'
+    project_short_description:       'Application settings helper for Django apps.'
+    python_versions:                 '2.7,3.4,3.5,3.6,3.7-dev,pypy'
+    pyup:                            'yes'
+    release_date:                    '2017-03-23'
+    repo_name:                       'django-appsettings'
+    requiresio:                      'no'
+    travis:                          'yes'
+    version:                         '0.1.0'
+    website:                         'http://pawamoy.github.io/'

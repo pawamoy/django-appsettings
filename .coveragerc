@@ -1,0 +1,18 @@
+[paths]
+source =
+   src/appsettings
+   */site-packages/appsettings
+
+[run]
+branch = true
+source =
+    appsettings
+    tests
+parallel = true
+
+[report]
+show_missing = true
+precision = 2
+omit =
+    *migrations*
+    tests/*
