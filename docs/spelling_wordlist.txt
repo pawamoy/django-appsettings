@@ -10,7 +10,7 @@ callstack
 Changelog
 Indices
 docstrings
-django-appsettings
+django-app-settings
 django-appsettings
 appsettings
 Pawamoy

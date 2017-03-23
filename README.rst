@@ -31,12 +31,12 @@ Django AppSettings
     :target: https://pyup.io/repos/github/Pawamoy/django-appsettings/
     :alt: Updates
 
-.. |version| image:: https://img.shields.io/pypi/v/django-appsettings.svg?style=flat
-    :target: https://pypi.python.org/pypi/django-appsettings/
+.. |version| image:: https://img.shields.io/pypi/v/django-app-settings.svg?style=flat
+    :target: https://pypi.python.org/pypi/django-app-settings/
     :alt: PyPI Package latest release
 
-.. |wheel| image:: https://img.shields.io/pypi/wheel/django-appsettings.svg?style=flat
-    :target: https://pypi.python.org/pypi/django-appsettings/
+.. |wheel| image:: https://img.shields.io/pypi/wheel/django-app-settings.svg?style=flat
+    :target: https://pypi.python.org/pypi/django-app-settings/
     :alt: PyPI Wheel
 .. |gitter| image:: https://badges.gitter.im/Pawamoy/django-appsettings.svg
     :target: https://gitter.im/Pawamoy/django-appsettings
@@ -60,7 +60,7 @@ Installation
 
 ::
 
-    pip install django-appsettings
+    pip install django-app-settings
 
 Documentation
 =============
