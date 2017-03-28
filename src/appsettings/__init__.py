@@ -2,110 +2,64 @@
 
 u"""Django AppSettings package."""
 
+
+from django.conf import settings
+
 __version__ = '0.1.0'
 
-class AppSettingsExample(object):
-    """
-    Application settings class.
 
-    This class provides static getters for each setting, and also an instance
-    ``load`` method to load every setting in an instance.
-    """
+class Setting(object):
+    def __init__(self,
+                 name=None,
+                 default=None,
+                 checker=lambda n, v: None,
+                 transformer=lambda v: v):
+        self.name = name
+        self.default = default
+        self.transform = transformer
+        self.check = checker
 
-    DEFAULT_RESPONSE = False
-    SKIP_IMPLICIT = False
-    LOG_ACCESS = True
-    LOG_PRIVILEGES = True
-    LOG_HIERARCHY = True
 
-    def load(self, settings=None):
-        """
-        Load settings in self.
+class Metaclass(type):
+    def __new__(mcs, cls, bases, dct):
+        new_attr = {}
+        _meta = dct.pop('Meta', type('Meta', (), {'settings_prefix': ''}))()
+        _meta.settings = []
+        for name, val in dct.items():
+            if isinstance(val, Setting):
+                _meta.settings.append(name)
+                # populate name
+                if val.name is None:
+                    val.name = name.upper()
+                # add raw getters
+                raw_name = 'get_raw_%s' % name
+                new_attr[raw_name] = staticmethod(lambda: getattr(
+                    settings, _meta.settings_prefix.upper() + val.name,
+                    val.default))
+                # add getters (raw getter + transform)
+                new_attr['get_%s' % name] = staticmethod(lambda: val.transform(
+                    new_attr[raw_name]()))
+                # add checkers (raw getter + checker)
+                new_attr['check_%s' % name] = staticmethod(lambda: val.check(
+                    val.name, new_attr[raw_name]()))
+            new_attr[name] = val
+        new_attr['_meta'] = _meta
 
-        Args:
-        settings (list): list of settings to load (strings).
-        """
-        if settings is not None:
-            for setting in settings:
-                setattr(self, setting.upper(), getattr(
-                    AppSettings, 'get_%s' % setting.lower())())
-            return
-        self.DEFAULT_RESPONSE = AppSettings.get_default_response()
-        self.SKIP_IMPLICIT = AppSettings.get_skip_implicit()
-        self.LOG_ACCESS = AppSettings.get_log_access()
-        self.LOG_PRIVILEGES = AppSettings.get_log_privileges()
-        self.LOG_HIERARCHY = AppSettings.get_log_hierarchy()
+        return super(Metaclass, mcs).__new__(mcs, cls, bases, new_attr)
 
-    @staticmethod
-    def check():
-        """Run every check method for settings."""
-        AppSettings.check_default_response()
-        AppSettings.check_skip_implicit()
-        AppSettings.check_log_access()
-        AppSettings.check_log_privileges()
-        AppSettings.check_log_hierarchy()
+    def __init__(cls, name, bases, dct):
+        super(Metaclass, cls).__init__(name, bases, dct)
 
-    @staticmethod
-    def check_default_response():
-        """Check the value of given default response setting."""
-        default_response = AppSettings.get_default_response()
-        if not isinstance(default_response, bool):
-            raise ValueError('DEFAULT_RESPONSE must be True or False')
 
-    @staticmethod
-    def get_default_response():
-        """Return default response setting."""
-        return getattr(settings, 'CERBERUS_DEFAULT_RESPONSE',
-                       AppSettings.DEFAULT_RESPONSE)
+class AppSettings(object):
+    __metaclass__ = Metaclass
 
-    @staticmethod
-    def check_skip_implicit():
-        """Check the value of given skip implicit setting."""
-        skip_implicit = AppSettings.get_skip_implicit()
-        if not isinstance(skip_implicit, bool):
-            raise ValueError('SKIP_IMPLICIT must be True or False')
+    def __init__(self):
+        for setting in self._meta.settings:
+            setattr(self, setting, getattr(
+                self.__class__, 'get_%s' % setting)())
 
-    @staticmethod
-    def get_skip_implicit():
-        """Return skip implicit setting."""
-        return getattr(settings, 'CERBERUS_SKIP_IMPLICIT',
-                       AppSettings.SKIP_IMPLICIT)
-
-    @staticmethod
-    def check_log_access():
-        """Check the value of given log access setting."""
-        log_access = AppSettings.get_log_access()
-        if not isinstance(log_access, bool):
-            raise ValueError('LOG_ACCESS must be True or False')
-
-    @staticmethod
-    def get_log_access():
-        """Return log access setting."""
-        return getattr(settings, 'CERBERUS_LOG_ACCESS',
-                       AppSettings.LOG_ACCESS)
-
-    @staticmethod
-    def check_log_privileges():
-        """Check the value of given log privileges setting."""
-        log_privileges = AppSettings.get_log_privileges()
-        if not isinstance(log_privileges, bool):
-            raise ValueError('LOG_PRIVILEGES must be True or False')
-
-    @staticmethod
-    def get_log_privileges():
-        """Return log privileges setting."""
-        return getattr(settings, 'CERBERUS_LOG_PRIVILEGES',
-                       AppSettings.LOG_PRIVILEGES)
-
-    @staticmethod
-    def check_log_hierarchy():
-        """Check the value of given log hierarchy setting."""
-        log_hierarchy = AppSettings.get_log_hierarchy()
-        if not isinstance(log_hierarchy, bool):
-            raise ValueError('LOG_HIERARCHY must be True or False')
-
-    @staticmethod
-    def get_log_hierarchy():
-        """Return log hierarchy setting."""
-        return getattr(settings, 'CERBERUS_LOG_HIERARCHY',
-                       AppSettings.LOG_HIERARCHY)
+    @classmethod
+    def check(cls):
+        for setting in cls._meta.settings:
+            getattr(cls, 'check_%s' % setting)()
