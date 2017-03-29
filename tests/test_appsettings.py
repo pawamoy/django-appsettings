@@ -5,6 +5,8 @@
 
 from django.test import TestCase
 
+import pytest
+
 import appsettings
 
 
@@ -20,11 +22,12 @@ def transform(value):
 
 
 class AppSettingsExample(appsettings.AppSettings):
-    my_setting1 = appsettings.Setting()
-    my_setting2 = appsettings.Setting(name='hey')
-    my_setting3 = appsettings.Setting(default=1)
-    my_setting4 = appsettings.Setting(checker=check_int)
-    my_setting5 = appsettings.Setting(transformer=transform)
+    s1 = appsettings.Setting()
+    s2 = appsettings.Setting(name='hey')
+    s3 = appsettings.Setting(default=1)
+    s4 = appsettings.Setting(checker=check_int)
+    s5 = appsettings.Setting(transformer=transform)
+    s6 = appsettings.Setting(prefix='other')
 
     class Meta:
         settings_prefix = 'prefix_'
@@ -39,23 +42,22 @@ class MainTestCase(TestCase):
 
     def test_main(self):
         """Main test method."""
-        for setting in ('my_setting1',
-                        'my_setting2',
-                        'my_setting3',
-                        'my_setting4',
-                        'my_setting5'):
-            assert hasattr(AppSettingsExample, 'get_raw_%s' % setting)
-            attr = getattr(AppSettingsExample, 'get_raw_%s' % setting)
-            assert callable(attr)
+        for setting in ('s1', 's2', 's3', 's4', 's5'):
             assert hasattr(AppSettingsExample, 'get_%s' % setting)
             attr = getattr(AppSettingsExample, 'get_%s' % setting)
             assert callable(attr)
             assert hasattr(AppSettingsExample, 'check_%s' % setting)
             attr = getattr(AppSettingsExample, 'check_%s' % setting)
             assert callable(attr)
-        assert AppSettingsExample.get_raw_my_setting1() is None
-        assert AppSettingsExample.get_my_setting1() is None
-        assert AppSettingsExample.check_my_setting1() is None
+        assert AppSettingsExample.get_s1() is None
+        assert AppSettingsExample.get_s2() is None
+        assert AppSettingsExample.get_s3() == 1
+        assert AppSettingsExample.get_s4() is None
+        assert AppSettingsExample.get_s5() == 'NOT OK'
+        assert AppSettingsExample.get_s6() is None
+        assert AppSettingsExample.check_s1() is None
+        with pytest.raises(ValueError):
+            AppSettingsExample.check_s4()
 
     def tearDown(self):
         """Tear down method."""
