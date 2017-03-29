@@ -32,9 +32,9 @@ member-warnings: false
 
 pep8:
   full: true
-#   disable:
-#     - E226
-#     - E402
+  disable:
+    - N804
+    - N805
   options:
     max-line-length: 79
     single-line-if-stmt: n
@@ -48,3 +48,4 @@ pep8:
 pep257:
   disable:
     - D203
+    - D105

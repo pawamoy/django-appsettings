@@ -1,7 +1,7 @@
 #!/bin/bash
 { # Force shell to read entire script before executing it, thanks to compound command
   if [ $# -lt 2 ]; then
-    echo "usage: ./update.sh PROJECT_PATH TEMPLATE_PATH [COMMIT_MESSAGE]" >&2
+    echo "usage: ./update.sh PROJECT_PATH COOKIECUTTER_PATH [COMMIT_MESSAGE]" >&2
     exit 1
   fi
 
