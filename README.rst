@@ -38,6 +38,7 @@ Django AppSettings
 .. |wheel| image:: https://img.shields.io/pypi/wheel/django-app-settings.svg?style=flat
     :target: https://pypi.python.org/pypi/django-app-settings/
     :alt: PyPI Wheel
+
 .. |gitter| image:: https://badges.gitter.im/Pawamoy/django-appsettings.svg
     :target: https://gitter.im/Pawamoy/django-appsettings
     :alt: Join the chat at https://gitter.im/Pawamoy/django-appsettings
@@ -67,7 +68,7 @@ Documentation
 
 `On ReadTheDocs`_
 
-.. _`On ReadTheDocs`: http://REPLACE_WITH_RTD_SLUG.readthedocs.io/
+.. _`On ReadTheDocs`: http://django-appsettings.readthedocs.io/
 
 Development
 ===========
