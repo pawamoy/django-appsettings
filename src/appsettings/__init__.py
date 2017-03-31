@@ -2,67 +2,14 @@
 
 u"""Django AppSettings package."""
 
-from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 import six
 
+from .settings import Setting
+
+
 __version__ = '0.2.0'
-
-
-class Setting(object):
-    """
-    Generic setting class.
-
-    Serve as base class for more specific setting types.
-    """
-
-    def __init__(self,
-                 name=None,
-                 default=None,
-                 checker=lambda n, v: None,
-                 transformer=lambda v: v,
-                 prefix=None):
-        """
-        Initialization method.
-
-        Args:
-            name (str): name of the setting.
-            default (obj): default value given to the setting.
-            checker (func):
-                function to check the setting. It must take 2 arguments: name,
-                value, and raise an error if value is incorrect. Default:
-                do nothing.
-            transformer ():
-                function to transform the value retrieved from Django settings.
-                It must take 1 argument: value, and return it transformed.
-                Default: identity.
-            prefix (str):
-                prefix of the setting.
-                Will override ``AppSettings.Meta`` prefix.
-        """
-        self.name = name
-        self.default = default
-        self.transformer = transformer
-        self.checker = checker
-        self.prefix = prefix
-
-    def get_raw(self):
-        """Get the setting from ``django.conf.settings``."""
-        setting_name = self.prefix.upper() + self.name.upper()
-        return getattr(settings, setting_name, self.default)
-
-    def get(self):
-        """Get the setting and return it transformed."""
-        return self.transform()
-
-    def check(self):
-        """Check the setting. Raise exception if incorrect."""
-        return self.checker(self.name, self.get_raw())
-
-    def transform(self):
-        """Get the setting and return it transformed."""
-        return self.transformer(self.get_raw())
 
 
 class _Metaclass(type):

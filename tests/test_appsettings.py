@@ -109,6 +109,15 @@ class MainTestCase(TestCase):
         assert isinstance(AppSettingsExample.s1, appsettings.Setting)
         assert AppSettingsExample.s1.get() == AppSettingsExample.get_s1()
 
+    def test_setting_type(self):
+        """Test that settings are correctly initialized."""
+        from appsettings.settings import (
+            IntSetting, DictSetting, check_int, check_dict)
+        int_setting = IntSetting()
+        dict_setting = DictSetting()
+        assert int_setting.checker == check_int
+        assert dict_setting.checker == check_dict
+
     def tearDown(self):
         """Tear down method."""
         pass
