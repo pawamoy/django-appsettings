@@ -43,7 +43,7 @@ class MainTestCase(TestCase):
 
     def setUp(self):
         """Setup method."""
-        pass
+        self.package = appsettings
 
     def test_hasttr(self):
         """Main test method."""
@@ -120,4 +120,4 @@ class MainTestCase(TestCase):
 
     def tearDown(self):
         """Tear down method."""
-        pass
+        del self.package

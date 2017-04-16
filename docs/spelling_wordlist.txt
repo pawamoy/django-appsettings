@@ -20,3 +20,5 @@ Timothee
 Mazzucotelli
 Django
 django
+apps
+app

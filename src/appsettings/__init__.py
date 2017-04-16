@@ -86,6 +86,7 @@ class AppSettings(six.with_metaclass(_Metaclass)):
         for setting in cls._meta.settings:
             try:
                 getattr(cls, 'check_%s' % setting)()
+            # pylama:ignore=W0703
             except Exception as e:
                 exceptions.append(str(e))
         if exceptions:

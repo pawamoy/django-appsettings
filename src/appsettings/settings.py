@@ -16,6 +16,7 @@ def _import(complete_path):
 
 def _type_checker(t):
     def check(name, value):
+        """Check value for given type."""
         if not isinstance(value, t):
             raise ValueError('%s must be %s, not %s' % (
                 name, t, value.__class__))
@@ -24,6 +25,7 @@ def _type_checker(t):
 
 
 def _type_tuple_checker(ty, tu):
+    # pylama:ignore=C0111
     def check(name, value):
         if not isinstance(value, tu):
             raise ValueError('%s must be %s, not %s' % (
@@ -32,6 +34,7 @@ def _type_tuple_checker(ty, tu):
             raise ValueError('All elements of %s must be %s' % (name, ty))
     check.__name__ = 'check_%s_%s' % (ty.__name__, tu.__name__)
     return check
+
 
 check_string = _type_checker(str)
 check_int = _type_checker(int)
@@ -118,6 +121,7 @@ def _type_setting(cls_name, check_func):
                 name, default, checker, transformer, prefix)
     _Setting.__name__ = '%sSetting' % cls_name
     return _Setting
+
 
 StringSetting = _type_setting('String', check_string)
 IntSetting = _type_setting('Int', check_int)
