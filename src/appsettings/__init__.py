@@ -9,7 +9,7 @@ import six
 from .settings import Setting
 
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 
 class _Metaclass(type):

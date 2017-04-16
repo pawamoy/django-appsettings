@@ -28,7 +28,7 @@ def read(*names, **kwargs):
 
 setup(
     name='django-app-settings',
-    version='0.2.0',
+    version='0.2.1',
     license='ISC',
     description='Application settings helper for Django apps.',
     long_description='%s\n%s' % (
