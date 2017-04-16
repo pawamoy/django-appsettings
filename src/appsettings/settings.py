@@ -44,6 +44,18 @@ check_list = _type_checker(list)
 check_dict = _type_checker(dict)
 check_set = _type_checker(set)
 
+def check_positive_int(name, value):
+    if not isinstance(value, int):
+        raise ValueError('%s must be int' % name)
+    elif value < 0:
+        raise ValueError('%s must be positive or zero' % name)
+
+def check_positive_float(name, value):
+    if not isinstance(value, float):
+        raise ValueError('%s must be float' % name)
+    elif value < 0.0:
+        raise ValueError('%s must be positive or zero' % name)
+
 check_string_list = _type_tuple_checker(str, list)
 check_string_set = _type_tuple_checker(str, set)
 check_int_list = _type_tuple_checker(str, list)
@@ -125,8 +137,10 @@ def _type_setting(cls_name, check_func):
 
 StringSetting = _type_setting('String', check_string)
 IntSetting = _type_setting('Int', check_int)
+PositiveIntSetting = _type_setting('PositiveInt', check_positive_int)
 BoolSetting = _type_setting('Bool', check_bool)
 FloatSetting = _type_setting('Float', check_float)
+PositiveFloatSetting = _type_setting('PositiveFloat', check_positive_float)
 ListSetting = _type_setting('List', check_list)
 SetSetting = _type_setting('Set', check_set)
 DictSetting = _type_setting('Dict', check_dict)
