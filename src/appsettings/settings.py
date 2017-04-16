@@ -44,17 +44,22 @@ check_list = _type_checker(list)
 check_dict = _type_checker(dict)
 check_set = _type_checker(set)
 
+
 def check_positive_int(name, value):
+    """Check positive int value."""
     if not isinstance(value, int):
         raise ValueError('%s must be int' % name)
     elif value < 0:
         raise ValueError('%s must be positive or zero' % name)
 
+
 def check_positive_float(name, value):
+    """Check positive int value."""
     if not isinstance(value, float):
         raise ValueError('%s must be float' % name)
     elif value < 0.0:
         raise ValueError('%s must be positive or zero' % name)
+
 
 check_string_list = _type_tuple_checker(str, list)
 check_string_set = _type_tuple_checker(str, set)
