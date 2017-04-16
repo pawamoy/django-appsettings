@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.2.2 (2017-04-17)
+==================
+
+- Import settings classes in main module to simplify imports.
+
 0.2.1 (2017-04-17)
 ==================
 
