@@ -10,7 +10,7 @@ case $tox_ok in
   y|Y|yes) proceed=1 ;;
 esac
 
-if [ ${proceed} -eq 1]; then
+if [ ${proceed} -eq 1 ]; then
   python setup.py clean --all sdist bdist_wheel
   success=true
   for d in dist/*; do
