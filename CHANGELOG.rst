@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.2.4 (2917-05-02)
+==================
+
+- Settings are not checked when they default to the provided default value.
+- Settings classes received better default values corresponding to their types.
+
 0.2.3 (2917-05-02)
 ==================
 
