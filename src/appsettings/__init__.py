@@ -20,7 +20,7 @@ __all__ = (
     'ListSetting', 'PositiveFloatSetting', 'PositiveIntSetting', 'SetSetting',
     'Setting', 'StringListSetting', 'StringSetSetting', 'StringSetting')
 
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 
 
 class _Metaclass(type):
