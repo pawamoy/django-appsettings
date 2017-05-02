@@ -9,17 +9,16 @@ import six
 from .settings import (
     BoolListSetting, BoolSetSetting, BoolSetting, DictSetting,
     FloatListSetting, FloatSetSetting, FloatSetting, ImportedObjectSetting,
-    IntListSetting, IntSetSetting, ListSetting, PositiveFloatSetting,
-    PositiveIntSetting, SetSetting, Setting, StringListSetting,
-    StringSetSetting, StringSetting)
-
+    IntListSetting, IntSetSetting, IntSetting, ListSetting,
+    PositiveFloatSetting, PositiveIntSetting, SetSetting, Setting,
+    StringListSetting, StringSetSetting, StringSetting)
 
 __all__ = (
     'BoolListSetting', 'BoolSetSetting', 'BoolSetting', 'DictSetting',
     'FloatListSetting', 'FloatSetSetting', 'FloatSetting',
-    'ImportedObjectSetting', 'IntListSetting', 'IntSetSetting', 'ListSetting',
-    'PositiveFloatSetting', 'PositiveIntSetting', 'SetSetting', 'Setting',
-    'StringListSetting', 'StringSetSetting', 'StringSetting')
+    'ImportedObjectSetting', 'IntListSetting', 'IntSetSetting', 'IntSetting',
+    'ListSetting', 'PositiveFloatSetting', 'PositiveIntSetting', 'SetSetting',
+    'Setting', 'StringListSetting', 'StringSetSetting', 'StringSetting')
 
 __version__ = '0.2.3'
 

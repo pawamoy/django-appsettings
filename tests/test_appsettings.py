@@ -28,9 +28,10 @@ class AppSettingsExample(appsettings.AppSettings):
     s1 = appsettings.Setting()
     s2 = appsettings.Setting(name='hey')
     s3 = appsettings.Setting(default=1)
-    s4 = appsettings.Setting(checker=check_int)
+    s4 = appsettings.IntSetting()
     s5 = appsettings.Setting(transformer=transform)
     s6 = appsettings.Setting(prefix='other')
+    s7 = appsettings.Setting(required=True)
 
     class Meta:
         """AppSettings' Meta class."""
@@ -45,7 +46,8 @@ class MainTestCase(TestCase):
         """Setup method."""
         self.package = appsettings
 
-    def test_hasttr(self):
+    @override_settings(PREFIX_S7='required')
+    def test_hasattr(self):
         """Main test method."""
         settings = AppSettingsExample()
         for setting in ('s1', 's2', 's3', 's4', 's5'):
@@ -60,19 +62,19 @@ class MainTestCase(TestCase):
         assert AppSettingsExample.get_s1() is None
         assert AppSettingsExample.get_s2() is None
         assert AppSettingsExample.get_s3() == 1
-        assert AppSettingsExample.get_s4() is None
+        assert AppSettingsExample.get_s4() == 0
         assert AppSettingsExample.get_s5() == 'NOT OK'
         assert AppSettingsExample.get_s6() is None
 
     def test_check_methods(self):
         """Test static check methods."""
         assert AppSettingsExample.check_s1() is None
-        with pytest.raises(ValueError):
-            AppSettingsExample.check_s4()
+        assert AppSettingsExample.check_s4() is None
         with pytest.raises(ImproperlyConfigured):
             AppSettingsExample.check()
         assert appsettings.AppSettings.check() is None
 
+    @override_settings(PREFIX_S7='required')
     def test_get_return_equals_instance_attr(self):
         """Test static get methods return same thing as instance attributes."""
         settings = AppSettingsExample()
@@ -83,6 +85,7 @@ class MainTestCase(TestCase):
         assert AppSettingsExample.get_s5() == settings.s5
         assert AppSettingsExample.get_s6() == settings.s6
 
+    @override_settings(PREFIX_S7='required')
     def test_independent_from_order(self):
         """Test get methods do not depend on instantiation/import order."""
         got = [AppSettingsExample.get_s1(),

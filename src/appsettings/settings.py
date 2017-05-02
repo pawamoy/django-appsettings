@@ -47,18 +47,23 @@ check_set = _type_checker(set)
 
 def check_positive_int(name, value):
     """Check positive int value."""
-    if not isinstance(value, int):
-        raise ValueError('%s must be int' % name)
-    elif value < 0:
+    check_int(name, value)
+    if value < 0:
         raise ValueError('%s must be positive or zero' % name)
 
 
 def check_positive_float(name, value):
     """Check positive int value."""
-    if not isinstance(value, float):
-        raise ValueError('%s must be float' % name)
-    elif value < 0.0:
+    check_float(name, value)
+    if value < 0.0:
         raise ValueError('%s must be positive or zero' % name)
+
+
+def check_object_path(name, value):
+    """Check positive int value."""
+    check_string(name, value)
+    # TODO: maybe check that the object actually exists,
+    # see http://stackoverflow.com/questions/14050281
 
 
 check_string_list = _type_tuple_checker(str, list)
@@ -131,18 +136,20 @@ class Setting(object):
 
     def check(self):
         """Check the setting. Raise exception if incorrect."""
-        return self.checker(self.full_name, self.get_raw())
+        value = self.get_raw()
+        if value != self.default:
+            self.checker(self.full_name, value)
 
     def transform(self):
         """Get the setting and return it transformed."""
         return self.transformer(self.get_raw())
 
 
-def _type_setting(cls_name, check_func):
+def _type_setting(cls_name, check_func, default_value):
     class _Setting(Setting):
         def __init__(self,
                      name=None,
-                     default=None,
+                     default=default_value,
                      required=False,
                      checker=check_func,
                      transformer=lambda v: v,
@@ -153,24 +160,24 @@ def _type_setting(cls_name, check_func):
     return _Setting
 
 
-StringSetting = _type_setting('String', check_string)
-IntSetting = _type_setting('Int', check_int)
-PositiveIntSetting = _type_setting('PositiveInt', check_positive_int)
-BoolSetting = _type_setting('Bool', check_bool)
-FloatSetting = _type_setting('Float', check_float)
-PositiveFloatSetting = _type_setting('PositiveFloat', check_positive_float)
-ListSetting = _type_setting('List', check_list)
-SetSetting = _type_setting('Set', check_set)
-DictSetting = _type_setting('Dict', check_dict)
+StringSetting = _type_setting('String', check_string, '')
+IntSetting = _type_setting('Int', check_int, 0)
+PositiveIntSetting = _type_setting('PositiveInt', check_positive_int, 0)
+BoolSetting = _type_setting('Bool', check_bool, False)
+FloatSetting = _type_setting('Float', check_float, 0.0)
+PositiveFloatSetting = _type_setting('PositiveFloat', check_positive_float, 0.0)  # noqa
+ListSetting = _type_setting('List', check_list, [])
+SetSetting = _type_setting('Set', check_set, ())
+DictSetting = _type_setting('Dict', check_dict, {})
 
-StringListSetting = _type_setting('StringList', check_string_list)
-StringSetSetting = _type_setting('StringSet', check_string_set)
-IntListSetting = _type_setting('IntList', check_int_list)
-IntSetSetting = _type_setting('IntSet', check_int_set)
-BoolListSetting = _type_setting('BoolList', check_bool_list)
-BoolSetSetting = _type_setting('BoolSet', check_bool_set)
-FloatListSetting = _type_setting('FloatList', check_float_list)
-FloatSetSetting = _type_setting('FloatSet', check_float_set)
+StringListSetting = _type_setting('StringList', check_string_list, [])
+StringSetSetting = _type_setting('StringSet', check_string_set, ())
+IntListSetting = _type_setting('IntList', check_int_list, [])
+IntSetSetting = _type_setting('IntSet', check_int_set, ())
+BoolListSetting = _type_setting('BoolList', check_bool_list, [])
+BoolSetSetting = _type_setting('BoolSet', check_bool_set, ())
+FloatListSetting = _type_setting('FloatList', check_float_list, [])
+FloatSetSetting = _type_setting('FloatSet', check_float_set, ())
 
 
 class ImportedObjectSetting(Setting):
@@ -180,7 +187,7 @@ class ImportedObjectSetting(Setting):
                  name=None,
                  default=None,
                  required=False,
-                 checker=check_string,
+                 checker=check_object_path,
                  transformer=_import,
                  prefix=None):
         """
