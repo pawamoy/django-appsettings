@@ -9,8 +9,8 @@ from django.conf import settings
 
 def _import(complete_path):
     module_name = '.'.join(complete_path.split('.')[:-1])
-    module = importlib.import_module(name=module_name)
-    function_or_class = getattr(module, complete_path.split('.')[-1])
+    module_obj = importlib.import_module(name=module_name)
+    function_or_class = getattr(module_obj, complete_path.split('.')[-1])
     return function_or_class
 
 
@@ -63,12 +63,12 @@ def check_positive_float(name, value):
 
 check_string_list = _type_tuple_checker(str, list)
 check_string_set = _type_tuple_checker(str, set)
-check_int_list = _type_tuple_checker(str, list)
-check_int_set = _type_tuple_checker(str, set)
-check_bool_list = _type_tuple_checker(str, list)
-check_bool_set = _type_tuple_checker(str, set)
-check_float_list = _type_tuple_checker(str, list)
-check_float_set = _type_tuple_checker(str, set)
+check_int_list = _type_tuple_checker(int, list)
+check_int_set = _type_tuple_checker(int, set)
+check_bool_list = _type_tuple_checker(bool, list)
+check_bool_set = _type_tuple_checker(bool, set)
+check_float_list = _type_tuple_checker(float, list)
+check_float_set = _type_tuple_checker(float, set)
 
 
 class Setting(object):
@@ -81,6 +81,7 @@ class Setting(object):
     def __init__(self,
                  name=None,
                  default=None,
+                 required=False,
                  checker=lambda n, v: None,
                  transformer=lambda v: v,
                  prefix=None):
@@ -90,6 +91,7 @@ class Setting(object):
         Args:
             name (str): name of the setting.
             default (obj): default value given to the setting.
+            required (bool): whether setting is required or not.
             checker (func):
                 function to check the setting. It must take 2 arguments: name,
                 value, and raise an error if value is incorrect. Default:
@@ -104,14 +106,24 @@ class Setting(object):
         """
         self.name = name
         self.default = default
+        self.required = required
         self.transformer = transformer
         self.checker = checker
         self.prefix = prefix
 
+    @property
+    def full_name(self):
+        return self.prefix.upper() + self.name.upper()
+
     def get_raw(self):
         """Get the setting from ``django.conf.settings``."""
-        setting_name = self.prefix.upper() + self.name.upper()
-        return getattr(settings, setting_name, self.default)
+        try:
+            return getattr(settings, self.full_name)
+        except AttributeError:
+            if self.required:
+                raise AttributeError(
+                    'setting %s is required.' % self.full_name)
+            return self.default
 
     def get(self):
         """Get the setting and return it transformed."""
@@ -119,7 +131,7 @@ class Setting(object):
 
     def check(self):
         """Check the setting. Raise exception if incorrect."""
-        return self.checker(self.name, self.get_raw())
+        return self.checker(self.full_name, self.get_raw())
 
     def transform(self):
         """Get the setting and return it transformed."""
@@ -131,11 +143,12 @@ def _type_setting(cls_name, check_func):
         def __init__(self,
                      name=None,
                      default=None,
+                     required=False,
                      checker=check_func,
                      transformer=lambda v: v,
                      prefix=None):
             super(_Setting, self).__init__(
-                name, default, checker, transformer, prefix)
+                name, default, required, checker, transformer, prefix)
     _Setting.__name__ = '%sSetting' % cls_name
     return _Setting
 
@@ -166,6 +179,7 @@ class ImportedObjectSetting(Setting):
     def __init__(self,
                  name=None,
                  default=None,
+                 required=False,
                  checker=check_string,
                  transformer=_import,
                  prefix=None):
@@ -175,9 +189,10 @@ class ImportedObjectSetting(Setting):
         Args:
             name (str): the name of the setting.
             default (obj): the default value given to the setting.
+            required (bool): whether setting is required or not.
             checker (func): the function to check the setting value.
             transformer (func): the function to transform the setting value.
             prefix (str): the setting's prefix.
         """
         super(ImportedObjectSetting, self).__init__(
-            name, default, checker, transformer, prefix)
+            name, default, required, checker, transformer, prefix)
