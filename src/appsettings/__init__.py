@@ -52,9 +52,9 @@ class _Metaclass(type):
                 if val.prefix is None:
                     val.prefix = _meta.setting_prefix
                 # add getter
-                new_attr['get_%s' % name] = val.get
+                # new_attr['get_%s' % name] = val.get
                 # add checker
-                new_attr['check_%s' % name] = val.check
+                # new_attr['check_%s' % name] = val.check
             new_attr[name] = val
         new_attr['_meta'] = _meta
 
@@ -84,7 +84,7 @@ class AppSettings(six.with_metaclass(_Metaclass)):
         """
         for setting in self._meta.settings:
             setattr(self, setting, getattr(
-                self.__class__, 'get_%s' % setting)())
+                self.__class__, '%s' % setting).get())
 
     @classmethod
     def check(cls):
@@ -96,7 +96,7 @@ class AppSettings(six.with_metaclass(_Metaclass)):
         exceptions = []
         for setting in cls._meta.settings:
             try:
-                getattr(cls, 'check_%s' % setting)()
+                getattr(cls, '%s' % setting).check()
             # pylama:ignore=W0703
             except Exception as e:
                 exceptions.append(str(e))
