@@ -31,7 +31,7 @@ A setting disposes of four methods:
 - ``check``: check the setting (not transformed).
 - ``transform``: get the raw setting and apply transformation.
 
-When subclassing ``Setting`` to define a custom setting,
+When sub-classing ``Setting`` to define a custom setting,
 override ``check`` and ``transform`` methods like this:
 
 .. code:: python

@@ -124,7 +124,8 @@ class Setting(object):
 
     def check(self):
         """Check the setting. Raise exception if incorrect."""
-        pass
+
+        self.get_raw()
 
     def transform(self):
         """Get the setting and return it transformed."""

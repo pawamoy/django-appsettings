@@ -59,7 +59,97 @@ Quick usage
 
 .. code:: python
 
+    # my_package/apps.py
 
+    from django.apps import AppConfig
+    import appsettings as aps
+
+
+    class AppSettings(aps.AppSettings):
+        my_setting = aps.Setting(name='basic_setting', default=25)
+
+        required_setting = aps.Setting(required=True)  # name='REQUIRED_SETTING'
+
+        typed_setting = aps.StringSetting(prefix='string_')
+        # -> typed_setting.full_name == 'STRING_TYPED_SETTING'
+
+        custom_setting = RegexSetting()  # -> see RegexSetting class below
+
+        class Meta:
+          # default prefix for every settings
+          setting_prefix = 'example_'
+
+
+    class RegexSetting(Setting):
+        def check():
+            value = self.get_raw()  # should always be called to check required condition
+            if value != self.default:  # always allow default to pass
+                re_type = type(re.compile(r'^$'))
+                if not isinstance(value, (re_type, str)):
+                    # raise whatever exception
+                    raise ValueError('%s must be a a string or a compiled regex '
+                                     '(use re.compile)' % self.full_name)
+
+        def transform(self):
+            value = self.get_raw()
+            # ensure it always return a compiled regex
+            if isinstance(value, str):
+                value = re.compile(value)
+            return value
+
+
+    class MyAppConfig(AppConfig):
+        name = 'my_app'
+        verbose_name = 'My Application'
+
+        def ready(self):
+            # check every settings at startup, raise one exception
+            # with all errors in its message
+            AppSettings.check()
+
+
+.. code:: python
+
+    # django_project/settings.py
+    EXAMPLE_BASIC_SETTING = 26
+    EXAMPLE_REQUIRED_SETTING = 'something'
+
+.. code:: python
+
+    # my_package/other_module.py
+
+    from .apps import AppSettings
+
+
+    regex = AppSettings.custom_setting.get()  # alias for transform()
+
+    # instantiate the class to load each and every settings
+    appsettings = AppSettings()
+    appsettings.my_setting == 25  # False: 26
+
+
+**Settings classes:**
+
+- StringSetting: default = ''
+- IntegerSetting: default = 0
+- PositiveIntegerSetting: default = 0
+- BooleanSetting: default = False
+- FloatSetting: default = 0.0
+- PositiveFloatSetting: default = 0.0
+- ListSetting: default = []
+- SetSetting: default = ()
+- DictSetting: default = {}
+
+*Are the following settings useful? Please tell me in the |gitter|.*
+
+- StringListSetting: default = []
+- StringSetSetting: default = ()
+- IntegerListSetting: default = []
+- IntegerSetSetting: default = ()
+- BooleanListSetting: default = []
+- BooleanSetSetting: default = ()
+- FloatListSetting: default = []
+- FloatSetSetting: default = ()
 
 License
 =======
