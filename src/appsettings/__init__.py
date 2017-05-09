@@ -7,18 +7,19 @@ from django.core.exceptions import ImproperlyConfigured
 import six
 
 from .settings import (
-    BoolListSetting, BoolSetSetting, BoolSetting, DictSetting,
+    BooleanListSetting, BooleanSetSetting, BooleanSetting, DictSetting,
     FloatListSetting, FloatSetSetting, FloatSetting, ImportedObjectSetting,
-    IntListSetting, IntSetSetting, IntSetting, ListSetting,
-    PositiveFloatSetting, PositiveIntSetting, SetSetting, Setting,
+    IntegerListSetting, IntegerSetSetting, IntegerSetting, ListSetting,
+    PositiveFloatSetting, PositiveIntegerSetting, SetSetting, Setting,
     StringListSetting, StringSetSetting, StringSetting)
 
 __all__ = (
-    'BoolListSetting', 'BoolSetSetting', 'BoolSetting', 'DictSetting',
+    'BooleanListSetting', 'BooleanSetSetting', 'BooleanSetting', 'DictSetting',
     'FloatListSetting', 'FloatSetSetting', 'FloatSetting',
-    'ImportedObjectSetting', 'IntListSetting', 'IntSetSetting', 'IntSetting',
-    'ListSetting', 'PositiveFloatSetting', 'PositiveIntSetting', 'SetSetting',
-    'Setting', 'StringListSetting', 'StringSetSetting', 'StringSetting')
+    'ImportedObjectSetting', 'IntegerListSetting', 'IntegerSetSetting',
+    'IntegerSetting', 'ListSetting', 'PositiveFloatSetting',
+    'PositiveIntegerSetting', 'SetSetting', 'Setting', 'StringListSetting',
+    'StringSetSetting', 'StringSetting')
 
 __version__ = '0.2.4'
 

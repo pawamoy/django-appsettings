@@ -37,30 +37,30 @@ def _type_tuple_checker(ty, tu):
 
 
 check_string = _type_checker(str)
-check_int = _type_checker(int)
-check_bool = _type_checker(bool)
+check_integer = _type_checker(int)
+check_boolean = _type_checker(bool)
 check_float = _type_checker(float)
 check_list = _type_checker(list)
 check_dict = _type_checker(dict)
 check_set = _type_checker(set)
 
 
-def check_positive_int(name, value):
-    """Check positive int value."""
-    check_int(name, value)
+def check_positive_integer(name, value):
+    """Check positive integer value."""
+    check_integer(name, value)
     if value < 0:
         raise ValueError('%s must be positive or zero' % name)
 
 
 def check_positive_float(name, value):
-    """Check positive int value."""
+    """Check positive integer value."""
     check_float(name, value)
     if value < 0.0:
         raise ValueError('%s must be positive or zero' % name)
 
 
 def check_object_path(name, value):
-    """Check positive int value."""
+    """Check positive integer value."""
     check_string(name, value)
     # TODO: maybe check that the object actually exists,
     # see http://stackoverflow.com/questions/14050281
@@ -68,10 +68,10 @@ def check_object_path(name, value):
 
 check_string_list = _type_tuple_checker(str, list)
 check_string_set = _type_tuple_checker(str, set)
-check_int_list = _type_tuple_checker(int, list)
-check_int_set = _type_tuple_checker(int, set)
-check_bool_list = _type_tuple_checker(bool, list)
-check_bool_set = _type_tuple_checker(bool, set)
+check_integer_list = _type_tuple_checker(int, list)
+check_integer_set = _type_tuple_checker(int, set)
+check_boolean_list = _type_tuple_checker(bool, list)
+check_boolean_set = _type_tuple_checker(bool, set)
 check_float_list = _type_tuple_checker(float, list)
 check_float_set = _type_tuple_checker(float, set)
 
@@ -87,8 +87,6 @@ class Setting(object):
                  name=None,
                  default=None,
                  required=False,
-                 checker=lambda n, v: None,
-                 transformer=lambda v: v,
                  prefix=None):
         """
         Initialization method.
@@ -97,14 +95,6 @@ class Setting(object):
             name (str): name of the setting.
             default (obj): default value given to the setting.
             required (bool): whether setting is required or not.
-            checker (func):
-                function to check the setting. It must take 2 arguments: name,
-                value, and raise an error if value is incorrect. Default:
-                do nothing.
-            transformer ():
-                function to transform the value retrieved from Django settings.
-                It must take 1 argument: value, and return it transformed.
-                Default: identity.
             prefix (str):
                 prefix of the setting.
                 Will override ``AppSettings.Meta`` prefix.
@@ -112,8 +102,6 @@ class Setting(object):
         self.name = name
         self.default = default
         self.required = required
-        self.transformer = transformer
-        self.checker = checker
         self.prefix = prefix
 
     @property
@@ -136,13 +124,11 @@ class Setting(object):
 
     def check(self):
         """Check the setting. Raise exception if incorrect."""
-        value = self.get_raw()
-        if value != self.default:
-            self.checker(self.full_name, value)
+        pass
 
     def transform(self):
         """Get the setting and return it transformed."""
-        return self.transformer(self.get_raw())
+        return self.get_raw()
 
 
 def _type_setting(cls_name, check_func, default_value):
@@ -151,19 +137,22 @@ def _type_setting(cls_name, check_func, default_value):
                      name=None,
                      default=default_value,
                      required=False,
-                     checker=check_func,
-                     transformer=lambda v: v,
                      prefix=None):
             super(_Setting, self).__init__(
-                name, default, required, checker, transformer, prefix)
+                name, default, required, prefix)
+
+        def check(self):
+            value = self.get_raw()
+            if value != self.default:
+                check_func(self.full_name, value)
     _Setting.__name__ = '%sSetting' % cls_name
     return _Setting
 
 
 StringSetting = _type_setting('String', check_string, '')
-IntSetting = _type_setting('Int', check_int, 0)
-PositiveIntSetting = _type_setting('PositiveInt', check_positive_int, 0)
-BoolSetting = _type_setting('Bool', check_bool, False)
+IntegerSetting = _type_setting('Integer', check_integer, 0)
+PositiveIntegerSetting = _type_setting('PositiveInteger', check_positive_integer, 0)  # noqa
+BooleanSetting = _type_setting('Boolean', check_boolean, False)
 FloatSetting = _type_setting('Float', check_float, 0.0)
 PositiveFloatSetting = _type_setting('PositiveFloat', check_positive_float, 0.0)  # noqa
 ListSetting = _type_setting('List', check_list, [])
@@ -172,10 +161,10 @@ DictSetting = _type_setting('Dict', check_dict, {})
 
 StringListSetting = _type_setting('StringList', check_string_list, [])
 StringSetSetting = _type_setting('StringSet', check_string_set, ())
-IntListSetting = _type_setting('IntList', check_int_list, [])
-IntSetSetting = _type_setting('IntSet', check_int_set, ())
-BoolListSetting = _type_setting('BoolList', check_bool_list, [])
-BoolSetSetting = _type_setting('BoolSet', check_bool_set, ())
+IntegerListSetting = _type_setting('IntegerList', check_integer_list, [])
+IntegerSetSetting = _type_setting('IntegerSet', check_integer_set, ())
+BooleanListSetting = _type_setting('BooleanList', check_boolean_list, [])
+BooleanSetSetting = _type_setting('BooleanSet', check_boolean_set, ())
 FloatListSetting = _type_setting('FloatList', check_float_list, [])
 FloatSetSetting = _type_setting('FloatSet', check_float_set, ())
 
@@ -187,8 +176,6 @@ class ImportedObjectSetting(Setting):
                  name=None,
                  default=None,
                  required=False,
-                 checker=check_object_path,
-                 transformer=_import,
                  prefix=None):
         """
         Initialization method.
@@ -202,4 +189,12 @@ class ImportedObjectSetting(Setting):
             prefix (str): the setting's prefix.
         """
         super(ImportedObjectSetting, self).__init__(
-            name, default, required, checker, transformer, prefix)
+            name, default, required, prefix)
+
+    def check(self):
+        value = self.get_raw()
+        if value != self.default:
+            check_object_path(self.full_name, value)
+
+    def transform(self):
+        return _import(self.get_raw())
