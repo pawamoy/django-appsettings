@@ -104,28 +104,6 @@ In the rest of your code
     AppSettings.always_use_ice_cream.get()  # to get ASH_ALWAYS_USE_ICE_CREAM setting dynamically
     my_python_object = AppSettings.imported_object.get()
 
-You can access settings directly from the settings class, but also from the
-settings instances:
-
-.. code:: python
-
-    my_setting = AppSettings.my_setting
-    my_setting.get()  # get and transform
-    my_setting.check()  # get and check
-    my_setting.get_raw()  # just get the value in django settings
-
-.. warning::
-
-    After instantiating an AppSettings class, the settings won't be
-    instances of Setting anymore but the result of their ``get`` method.
-
-    .. code:: python
-
-        appsettings = AppSettings()
-        appsettings.my_setting == AppSettings.my_setting        # False
-        appsettings.my_setting == AppSettings.my_setting.get()  # True
-        appsettings.my_setting == AppSettings.get_my_setting()  # True
-
 Running ``AppSettings.check()`` will raise an ``ImproperlyConfigured``
 exception if at least one of the settings' ``check`` methods raised an
 exception. It will also print all caught exceptions.

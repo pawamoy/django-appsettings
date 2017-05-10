@@ -2,13 +2,19 @@
 Changelog
 =========
 
-0.2.4 (2917-05-02)
+0.2.5 (2017-05-??)
+==================
+
+- Rename ``Int`` settings to ``Integer``, and ``Bool`` ones to ``Boolean``.
+- Remove metaclass generated getters and checkers.
+
+0.2.4 (2017-05-02)
 ==================
 
 - Settings are not checked when they default to the provided default value.
 - Settings classes received better default values corresponding to their types.
 
-0.2.3 (2917-05-02)
+0.2.3 (2017-05-02)
 ==================
 
 - Add ``full_name`` property to ``Setting`` class.

@@ -139,8 +139,9 @@ Quick usage
 - ListSetting: default = []
 - SetSetting: default = ()
 - DictSetting: default = {}
+- ImportedObjectSetting: default = None
 
-*Are the following settings useful? Please tell me in the |gitter|.*
+*Are the following settings useful? Please tell me on Gitter.*
 
 - StringListSetting: default = []
 - StringSetSetting: default = ()
