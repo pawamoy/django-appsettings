@@ -2,9 +2,10 @@
 Changelog
 =========
 
-0.2.5 (2017-05-??)
+0.2.5 (2017-06-02)
 ==================
 
+- Add six dependency (now required).
 - Rename ``Int`` settings to ``Integer``, and ``Bool`` ones to ``Boolean``.
 - Remove metaclass generated getters and checkers.
 
