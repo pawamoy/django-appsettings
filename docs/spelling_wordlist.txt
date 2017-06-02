@@ -22,3 +22,5 @@ Django
 django
 apps
 app
+metaclass
+getters
