@@ -81,7 +81,7 @@ Quick usage
 
 
     class RegexSetting(Setting):
-        def check():
+        def check(self):
             value = self.get_raw()  # should always be called to check required condition
             if value != self.default:  # always allow default to pass
                 re_type = type(re.compile(r'^$'))
