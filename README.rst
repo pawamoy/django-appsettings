@@ -15,20 +15,20 @@ Django AppSettings
 |gitter|
 
 
-.. |travis| image:: https://travis-ci.org/Pawamoy/django-appsettings.svg?branch=master
-    :target: https://travis-ci.org/Pawamoy/django-appsettings/
+.. |travis| image:: https://travis-ci.org/Genida/django-appsettings.svg?branch=master
+    :target: https://travis-ci.org/Genida/django-appsettings/
     :alt: Travis-CI Build Status
 
 .. |codacygrade| image:: https://api.codacy.com/project/badge/Grade/20c775cc36804ddda8a70eb05b64ce92
-    :target: https://www.codacy.com/app/Pawamoy/django-appsettings/dashboard
+    :target: https://www.codacy.com/app/Genida/django-appsettings/dashboard
     :alt: Codacy Code Quality Status
 
 .. |codacycoverage| image:: https://api.codacy.com/project/badge/Coverage/20c775cc36804ddda8a70eb05b64ce92
-    :target: https://www.codacy.com/app/Pawamoy/django-appsettings/dashboard
+    :target: https://www.codacy.com/app/Genida/django-appsettings/dashboard
     :alt: Codacy Code Coverage
 
-.. |pyup| image:: https://pyup.io/repos/github/Pawamoy/django-appsettings/shield.svg
-    :target: https://pyup.io/repos/github/Pawamoy/django-appsettings/
+.. |pyup| image:: https://pyup.io/repos/github/Genida/django-appsettings/shield.svg
+    :target: https://pyup.io/repos/github/Genida/django-appsettings/
     :alt: Updates
 
 .. |version| image:: https://img.shields.io/pypi/v/django-app-settings.svg?style=flat
@@ -39,9 +39,9 @@ Django AppSettings
     :target: https://pypi.python.org/pypi/django-app-settings/
     :alt: PyPI Wheel
 
-.. |gitter| image:: https://badges.gitter.im/Pawamoy/django-appsettings.svg
-    :target: https://gitter.im/Pawamoy/django-appsettings
-    :alt: Join the chat at https://gitter.im/Pawamoy/django-appsettings
+.. |gitter| image:: https://badges.gitter.im/Genida/django-appsettings.svg
+    :target: https://gitter.im/Genida/django-appsettings
+    :alt: Join the chat at https://gitter.im/Genida/django-appsettings
 
 
 
