@@ -32,11 +32,11 @@ Django AppSettings
     :alt: Updates
 
 .. |version| image:: https://img.shields.io/pypi/v/django-app-settings.svg?style=flat
-    :target: https://pypi.python.org/pypi/django-app-settings/
+    :target: https://pypi.org/project/django-app-settings/
     :alt: PyPI Package latest release
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/django-app-settings.svg?style=flat
-    :target: https://pypi.python.org/pypi/django-app-settings/
+    :target: https://pypi.org/project/django-app-settings/
     :alt: PyPI Wheel
 
 .. |gitter| image:: https://badges.gitter.im/Pawamoy/django-appsettings.svg
