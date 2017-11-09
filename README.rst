@@ -80,7 +80,7 @@ Quick usage
           setting_prefix = 'example_'
 
 
-    class RegexSetting(Setting):
+    class RegexSetting(aps.Setting):
         def check(self):
             value = self.get_raw()  # should always be called to check required condition
             if value != self.default:  # always allow default to pass
@@ -124,8 +124,27 @@ Quick usage
     regex = AppSettings.custom_setting.get()  # alias for transform()
 
     # instantiate the class to load each and every settings
+    # note that appsettings object will not be affected by override_settings
     appsettings = AppSettings()
     appsettings.my_setting == 25  # False: 26
+
+.. code:: python
+
+    # tests/test_settings.py
+
+    from django.test import override_settings
+    from my_package.apps import AppSettings
+
+
+    def test_preloaded_settings():
+        app_conf = AppSettings()
+        assert isinstance(app_conf.typed_setting, str)
+
+
+    # you must directly use the class attributes to test overriden settings
+    def test_overridden_settings():
+        with override_settings(EXAMPLE_BASIC_SETTING=42):
+            assert AppSettings.my_setting.get() == 42
 
 
 **Settings classes:**

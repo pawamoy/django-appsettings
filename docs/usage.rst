@@ -19,7 +19,7 @@ be the variable name in uppercase.
     VERBOSE_APP_VERBOSITY_LEVEL = 'extremely_verbose'
 
 The default value is used if the setting was not declared. The setting
-can also be declared ``required``, and it that case it makes no sense to give
+can also be declared ``required``, and in that case it makes no sense to give
 it a default value (but it's tolerated). By default, settings are all optional
 (``required=False``). A setting that is required and not declared will raise
 an ``AttributeError``.
@@ -28,7 +28,7 @@ A setting disposes of four methods:
 
 - ``get_raw``: get the setting given in project's settings;
 - ``get``: return the result of ``transform``;
-- ``check``: check the setting (not transformed).
+- ``check``: check the raw setting (not transformed).
 - ``transform``: get the raw setting and apply transformation.
 
 When sub-classing ``Setting`` to define a custom setting,
@@ -89,6 +89,18 @@ Here is an example of settings declaration in ``apps.py``:
         class Meta:
             setting_prefix = 'ASH_'  # settings must be prefixed with ASH_
 
+In the project settings
+-----------------------
+
+.. code:: python
+
+    import re
+
+    ASH_ALWAYS_USE_ICE_CREAM = False
+    ASH_SETTING_NAME = 'some string'  # attr_name in AppSettings class
+    ASH_REGEX = re.compile(r'^$')
+    ASH_IMPORTED_OBJECT = 'package.module.object'
+
 In the rest of your code
 ------------------------
 
@@ -98,10 +110,11 @@ In the rest of your code
 
     # instantiation will load and transform every settings
     app_settings = AppSettings()
-    app_settings.attr_name == 'something'
+    app_settings.always_use_ice_cream == False
+    app_settings.attr_name == 'some string'
 
     # or, and in order to work with tests overriding settings
-    AppSettings.always_use_ice_cream.get()  # to get ASH_ALWAYS_USE_ICE_CREAM setting dynamically
+    ice_cream = AppSettings.always_use_ice_cream.get()  # to get ASH_ALWAYS_USE_ICE_CREAM setting dynamically
     my_python_object = AppSettings.imported_object.get()
 
 Running ``AppSettings.check()`` will raise an ``ImproperlyConfigured``
