@@ -7,20 +7,90 @@ from django.core.exceptions import ImproperlyConfigured
 import six
 
 from .settings import (
-    BooleanListSetting, BooleanSetSetting, BooleanSetting, DictSetting,
-    FloatListSetting, FloatSetSetting, FloatSetting, ImportedObjectSetting,
-    IntegerListSetting, IntegerSetSetting, IntegerSetting, ListSetting,
-    PositiveFloatSetting, PositiveIntegerSetting, SetSetting, Setting,
-    StringListSetting, StringSetSetting, StringSetting)
+    BooleanListSetting,
+    BooleanListTypeChecker,
+    BooleanSetSetting,
+    BooleanSetting,
+    BooleanSetTypeChecker,
+    BooleanTypeChecker,
+    DictKeyValueTypeChecker,
+    DictSetting,
+    DictTypeChecker,
+    FloatListSetting,
+    FloatListTypeChecker,
+    FloatSetSetting,
+    FloatSetting,
+    FloatSetTypeChecker,
+    FloatTypeChecker,
+    IntegerListSetting,
+    IntegerListTypeChecker,
+    IntegerSetSetting,
+    IntegerSetting,
+    IntegerSetTypeChecker,
+    IntegerTypeChecker,
+    ListSetting,
+    ListTypeChecker,
+    ObjectSetting,
+    ObjectTypeChecker,
+    PositiveFloatSetting,
+    PositiveFloatTypeChecker,
+    PositiveIntegerSetting,
+    PositiveIntegerTypeChecker,
+    SetSetting,
+    Setting,
+    SetTypeChecker,
+    StringListSetting,
+    StringListTypeChecker,
+    StringSetSetting,
+    StringSetting,
+    StringSetTypeChecker,
+    StringTypeChecker,
+    TupleTypeChecker,
+    TypeChecker
+)
 
 __all__ = (
-    'BooleanListSetting', 'BooleanSetSetting', 'BooleanSetting', 'DictSetting',
-    'FloatListSetting', 'FloatSetSetting', 'FloatSetting',
-    'ImportedObjectSetting', 'IntegerListSetting', 'IntegerSetSetting',
-    'IntegerSetting', 'ListSetting', 'PositiveFloatSetting',
-    'PositiveIntegerSetting', 'SetSetting', 'Setting', 'StringListSetting',
-    'StringSetSetting', 'StringSetting')
-
+    'BooleanListSetting',
+    'BooleanListTypeChecker',
+    'BooleanSetSetting',
+    'BooleanSetting',
+    'BooleanSetTypeChecker',
+    'BooleanTypeChecker',
+    'DictKeyValueTypeChecker',
+    'DictSetting',
+    'DictTypeChecker',
+    'FloatListSetting',
+    'FloatListTypeChecker',
+    'FloatSetSetting',
+    'FloatSetting',
+    'FloatSetTypeChecker',
+    'FloatTypeChecker',
+    'IntegerListSetting',
+    'IntegerListTypeChecker',
+    'IntegerSetSetting',
+    'IntegerSetting',
+    'IntegerSetTypeChecker',
+    'IntegerTypeChecker',
+    'ListSetting',
+    'ListTypeChecker',
+    'ObjectSetting',
+    'ObjectTypeChecker',
+    'PositiveFloatSetting',
+    'PositiveFloatTypeChecker',
+    'PositiveIntegerSetting',
+    'PositiveIntegerTypeChecker',
+    'SetSetting',
+    'Setting',
+    'SetTypeChecker',
+    'StringListSetting',
+    'StringListTypeChecker',
+    'StringSetSetting',
+    'StringSetting',
+    'StringSetTypeChecker',
+    'StringTypeChecker',
+    'TupleTypeChecker',
+    'TypeChecker'
+)
 
 
 class _Metaclass(type):
@@ -40,23 +110,21 @@ class _Metaclass(type):
         """
         new_attr = {}
         _meta = dct.pop('Meta', type('Meta', (), {'setting_prefix': ''}))()
-        _meta.settings = []
+        _meta.settings = {}
 
-        for name, val in dct.items():
-            if isinstance(val, Setting):
-                _meta.settings.append(name)
+        for name, setting in dct.items():
+            if isinstance(setting, Setting):
+                _meta.settings[name] = setting
                 # populate name
-                if val.name is None:
-                    val.name = name.upper()
+                if setting.name == '':
+                    setting.name = name.upper()
                 # populate prefix
-                if val.prefix is None:
-                    val.prefix = _meta.setting_prefix
-                # add getter
-                # new_attr['get_%s' % name] = val.get
-                # add checker
-                # new_attr['check_%s' % name] = val.check
-            new_attr[name] = val
+                if setting.prefix == '':
+                    setting.prefix = _meta.setting_prefix
+            else:
+                new_attr[name] = setting
         new_attr['_meta'] = _meta
+        new_attr['settings'] = _meta.settings
 
         return super(_Metaclass, mcs).__new__(mcs, cls, bases, new_attr)
 
@@ -76,15 +144,17 @@ class AppSettings(six.with_metaclass(_Metaclass)):
     """Base class for application settings."""
 
     def __init__(self):
-        """
-        Initialization method.
+        """Initialization method."""
+        self._cache = {}
 
-        Instantiation will replace every class-declared settings with
-        the result of their ``get`` method.
-        """
-        for setting in self._meta.settings:
-            setattr(self, setting, getattr(
-                self.__class__, '%s' % setting).get())
+    def __getattr__(self, item):
+        if item in self.settings.keys():
+            if item in self._cache:
+                return self._cache[item]
+            value = self._cache[item] = self.settings[item].get_value()
+            return value
+        raise AttributeError("'%s' class has no setting '%s'" % (
+            repr(self), item))
 
     @classmethod
     def check(cls):
@@ -94,7 +164,7 @@ class AppSettings(six.with_metaclass(_Metaclass)):
         Will raise an ``ImproperlyConfigured`` exception with explanation.
         """
         exceptions = []
-        for setting in cls._meta.settings:
+        for setting in cls.settings.values():
             try:
                 getattr(cls, '%s' % setting).check()
             # pylama:ignore=W0703
@@ -102,3 +172,6 @@ class AppSettings(six.with_metaclass(_Metaclass)):
                 exceptions.append(str(e))
         if exceptions:
             raise ImproperlyConfigured('\n'.join(exceptions))
+
+    def invalidate_cache(self):
+        self._cache = {}
