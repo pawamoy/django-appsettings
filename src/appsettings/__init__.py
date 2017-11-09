@@ -108,6 +108,14 @@ class _Metaclass(type):
         Returns:
             class: the new created class.
         """
+        super_new = super(_Metaclass, mcs).__new__
+
+        # Also ensure initialization is only performed for subclasses
+        # of AppSettings (excluding AppSettings class itself).
+        parents = [b for b in bases if isinstance(b, _Metaclass)]
+        if not parents:
+            return super_new(mcs, cls, bases, dct)
+
         new_attr = {}
         _meta = dct.pop('Meta', type('Meta', (), {'setting_prefix': ''}))()
         _meta.settings = {}
@@ -126,18 +134,13 @@ class _Metaclass(type):
         new_attr['_meta'] = _meta
         new_attr['settings'] = _meta.settings
 
-        return super(_Metaclass, mcs).__new__(mcs, cls, bases, new_attr)
+        return super_new(mcs, cls, bases, new_attr)
 
-    def __init__(cls, name, bases, dct):
-        """
-        Initialization method.
-
-        Args:
-            name (str): class name.
-            bases (tuple): base classes to inherit from.
-            dct (dict): class attributes.
-        """
-        super(_Metaclass, cls).__init__(name, bases, dct)
+    def __getattr__(cls, item):
+        if item in cls._meta.settings.keys():
+            return cls._meta.settings[item]
+        raise AttributeError("'%s' class has no attribute '%s'" % (
+            cls.__name__, item))
 
 
 class AppSettings(six.with_metaclass(_Metaclass)):
@@ -153,7 +156,7 @@ class AppSettings(six.with_metaclass(_Metaclass)):
                 return self._cache[item]
             value = self._cache[item] = self.settings[item].get_value()
             return value
-        raise AttributeError("'%s' class has no setting '%s'" % (
+        raise AttributeError("'%s' object has no attribute '%s'" % (
             repr(self), item))
 
     @classmethod
@@ -163,10 +166,13 @@ class AppSettings(six.with_metaclass(_Metaclass)):
 
         Will raise an ``ImproperlyConfigured`` exception with explanation.
         """
+        if cls == AppSettings:
+            return None
+
         exceptions = []
         for setting in cls.settings.values():
             try:
-                getattr(cls, '%s' % setting).check()
+                setting.check()
             # pylama:ignore=W0703
             except Exception as e:
                 exceptions.append(str(e))

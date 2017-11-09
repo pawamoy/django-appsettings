@@ -50,12 +50,12 @@ class MainTestCase(TestCase):
 
     def test_cannot_call_settings_from_class(self):
         """Test static get methods."""
-        assert not hasattr(AppSettingsExample, 's1')
-        assert not hasattr(AppSettingsExample, 's2')
-        assert not hasattr(AppSettingsExample, 's3')
-        assert not hasattr(AppSettingsExample, 's4')
-        assert not hasattr(AppSettingsExample, 's5')
-        assert not hasattr(AppSettingsExample, 's6')
+        assert hasattr(AppSettingsExample, 's1')
+        assert hasattr(AppSettingsExample, 's2')
+        assert hasattr(AppSettingsExample, 's3')
+        assert hasattr(AppSettingsExample, 's4')
+        assert hasattr(AppSettingsExample, 's5')
+        assert hasattr(AppSettingsExample, 's6')
 
     def test_check_methods(self):
         """Test static check methods."""
@@ -79,12 +79,12 @@ class MainTestCase(TestCase):
     @override_settings(PREFIX_S7='required')
     def test_independent_from_order(self):
         """Test get methods do not depend on instantiation/import order."""
-        got = [AppSettingsExample.settings['s1'].get_value(),
-               AppSettingsExample.settings['s2'].get_value(),
-               AppSettingsExample.settings['s3'].get_value(),
-               AppSettingsExample.settings['s4'].get_value(),
-               AppSettingsExample.settings['s5'].get_value(),
-               AppSettingsExample.settings['s6'].get_value()]
+        got = [AppSettingsExample.s1.get_value(),
+               AppSettingsExample.s2.get_value(),
+               AppSettingsExample.s3.get_value(),
+               AppSettingsExample.s4.get_value(),
+               AppSettingsExample.s5.get_value(),
+               AppSettingsExample.s6.get_value()]
         settings = AppSettingsExample()
         assert got == [settings.s1,
                        settings.s2,
