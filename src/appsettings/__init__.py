@@ -179,5 +179,5 @@ class AppSettings(six.with_metaclass(_Metaclass)):
         if exceptions:
             raise ImproperlyConfigured('\n'.join(exceptions))
 
-    def invalidate_cache(self):
+    def invalidate_cache(self, **kwargs):
         self._cache = {}
