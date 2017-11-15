@@ -7,8 +7,6 @@ import importlib
 from django.conf import settings
 
 
-# TODO: allow callables for Setting's default arg (can't put mutable objects)?
-
 # Basic type checkers ---------------------------------------------------------
 class TypeChecker(object):
     def __init__(self, base_type):
@@ -159,6 +157,7 @@ class Setting(object):
                  default=None,
                  required=False,
                  prefix='',
+                 call=True,
                  checker=lambda n, v: None):
         """
         Initialization method.
@@ -173,6 +172,7 @@ class Setting(object):
         """
         self.name = name
         self.default = default
+        self.call = call
         self.required = required
         self.prefix = prefix
         self.checker = checker
@@ -180,6 +180,12 @@ class Setting(object):
     @property
     def full_name(self):
         return self.prefix.upper() + self.name.upper()
+
+    @property
+    def default_value(self):
+        if callable(self.default) and self.call:
+            return self.default()
+        return self.default
 
     @property
     def raw_value(self):
@@ -190,7 +196,7 @@ class Setting(object):
             if self.required:
                 raise AttributeError(
                     'setting %s is required.' % self.full_name)
-            return self.default
+            return self.default_value
 
     @property
     def value(self):
@@ -210,133 +216,133 @@ class Setting(object):
 
 
 class StringSetting(Setting):
-    def __init__(self, name='', default='', required=False, prefix=''):
+    def __init__(self, name='', default='', required=False, prefix='', call=True):
         super(StringSetting, self).__init__(
-            name, default, required, prefix,
-            checker=StringTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=StringTypeChecker())
 
 
 class IntegerSetting(Setting):
-    def __init__(self, name='', default=0, required=False, prefix=''):
+    def __init__(self, name='', default=0, required=False, prefix='', call=True):
         super(IntegerSetting, self).__init__(
-            name, default, required, prefix,
-            checker=IntegerTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=IntegerTypeChecker())
 
 
 class PositiveIntegerSetting(Setting):
-    def __init__(self, name='', default=0, required=False, prefix=''):
+    def __init__(self, name='', default=0, required=False, prefix='', call=True):
         super(PositiveIntegerSetting, self).__init__(
-            name, default, required, prefix,
-            checker=PositiveIntegerTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=PositiveIntegerTypeChecker())
 
 
 class BooleanSetting(Setting):
-    def __init__(self, name='', default=True, required=False, prefix=''):
+    def __init__(self, name='', default=True, required=False, prefix='', call=True):
         super(BooleanSetting, self).__init__(
-            name, default, required, prefix,
-            checker=BooleanTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=BooleanTypeChecker())
 
 
 class FloatSetting(Setting):
-    def __init__(self, name='', default=0.0, required=False, prefix=''):
+    def __init__(self, name='', default=0.0, required=False, prefix='', call=True):
         super(FloatSetting, self).__init__(
-            name, default, required, prefix,
-            checker=FloatTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=FloatTypeChecker())
 
 
 class PositiveFloatSetting(Setting):
-    def __init__(self, name='', default=0.0, required=False, prefix=''):
+    def __init__(self, name='', default=0.0, required=False, prefix='', call=True):
         super(PositiveFloatSetting, self).__init__(
-            name, default, required, prefix,
-            checker=PositiveFloatTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=PositiveFloatTypeChecker())
 
 
 class ListSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix=''):
+    def __init__(self, name='', default=None, required=False, prefix='', call=True):
         super(ListSetting, self).__init__(
-            name, default, required, prefix,
-            checker=ListTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=ListTypeChecker())
 
 
 class SetSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix=''):
+    def __init__(self, name='', default=None, required=False, prefix='', call=True):
         super(SetSetting, self).__init__(
-            name, default, required, prefix,
-            checker=SetTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=SetTypeChecker())
 
 
 class DictSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix=''):
+    def __init__(self, name='', default=None, required=False, prefix='', call=True):
         super(DictSetting, self).__init__(
-            name, default, required, prefix,
-            checker=DictTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=DictTypeChecker())
 
 
 # Tuple settings --------------------------------------------------------------
 class StringListSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix=''):
+    def __init__(self, name='', default=None, required=False, prefix='', call=True):
         super(StringListSetting, self).__init__(
-            name, default, required, prefix,
-            checker=StringListTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=StringListTypeChecker())
 
 
 class StringSetSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix=''):
+    def __init__(self, name='', default=None, required=False, prefix='', call=True):
         super(StringSetSetting, self).__init__(
-            name, default, required, prefix,
-            checker=StringSetTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=StringSetTypeChecker())
 
 
 class IntegerListSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix=''):
+    def __init__(self, name='', default=None, required=False, prefix='', call=True):
         super(IntegerListSetting, self).__init__(
-            name, default, required, prefix,
-            checker=IntegerListTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=IntegerListTypeChecker())
 
 
 class IntegerSetSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix=''):
+    def __init__(self, name='', default=None, required=False, prefix='', call=True):
         super(IntegerSetSetting, self).__init__(
-            name, default, required, prefix,
-            checker=IntegerSetTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=IntegerSetTypeChecker())
 
 
 class BooleanListSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix=''):
+    def __init__(self, name='', default=None, required=False, prefix='', call=True):
         super(BooleanListSetting, self).__init__(
-            name, default, required, prefix,
-            checker=BooleanListTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=BooleanListTypeChecker())
 
 
 class BooleanSetSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix=''):
+    def __init__(self, name='', default=None, required=False, prefix='', call=True):
         super(BooleanSetSetting, self).__init__(
-            name, default, required, prefix,
-            checker=BooleanSetTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=BooleanSetTypeChecker())
 
 
 class FloatListSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix=''):
+    def __init__(self, name='', default=None, required=False, prefix='', call=True):
         super(FloatListSetting, self).__init__(
-            name, default, required, prefix,
-            checker=FloatListTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=FloatListTypeChecker())
 
 
 class FloatSetSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix=''):
+    def __init__(self, name='', default=None, required=False, prefix='', call=True):
         super(FloatSetSetting, self).__init__(
-            name, default, required, prefix,
-            checker=FloatSetTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=FloatSetTypeChecker())
 
 
 # Complex settings ------------------------------------------------------------
 class ObjectSetting(Setting):
     """Setting to import an object given its Python path (a.b.c)."""
 
-    def __init__(self, name='', default=None, required=False, prefix=''):
+    def __init__(self, name='', default=None, required=False, prefix='', call=False):
         super(ObjectSetting, self).__init__(
-            name, default, required, prefix,
-            checker=ObjectTypeChecker())
+            name=name, default=default, required=required, prefix=prefix,
+            call=call, checker=ObjectTypeChecker())
 
     def transform(self):
         path = self.raw_value
