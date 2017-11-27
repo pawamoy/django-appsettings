@@ -3,6 +3,7 @@
 u"""Django AppSettings package."""
 
 from django.core.exceptions import ImproperlyConfigured
+from django.core.signals import setting_changed
 
 import six
 
@@ -148,6 +149,7 @@ class AppSettings(six.with_metaclass(_Metaclass)):
 
     def __init__(self):
         """Initialization method."""
+        setting_changed.connect(self.invalidate_cache, dispatch_uid=id(self))
         self._cache = {}
 
     def __getattr__(self, item):
