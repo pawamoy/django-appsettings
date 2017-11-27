@@ -110,13 +110,6 @@ class TupleTypeChecker(IterableTypeChecker):
             tuple, item_type, min_length, max_length, empty)
 
 
-class RangeTypeChecker(IterableTypeChecker):
-    def __init__(self, min_length=None, max_length=None, empty=True):
-        super(RangeTypeChecker, self).__init__(
-            # don't need to check for integers as range enforces it
-            range, None, min_length, max_length, empty)
-
-
 # Dict type checkers ----------------------------------------------------------
 class DictTypeChecker(TypeChecker):
     def __init__(self, key_type=None, value_type=None, min_length=None, max_length=None, empty=True):
@@ -305,14 +298,6 @@ class TupleSetting(Setting):
     def __init__(self, name='', default=lambda: tuple(), required=False,
                  prefix='', call=True, **checker_kwargs):
         super(TupleSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call=call, checker=SetTypeChecker(**checker_kwargs))
-
-
-class RangeSetting(Setting):
-    def __init__(self, name='', default=lambda: range(0), required=False,
-                 prefix='', call=True, **checker_kwargs):
-        super(RangeSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call=call, checker=SetTypeChecker(**checker_kwargs))
 

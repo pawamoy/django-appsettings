@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """Main test script."""
+
 from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase, override_settings
 
@@ -17,6 +18,9 @@ class MainTestCase(SimpleTestCase):
             setting = appsettings.Setting()
         appconf = AppConf()
         assert appconf
+        assert appconf.setting == AppConf.setting.get_value()
+        assert AppConf.setting is AppConf.settings['setting']
+        assert AppConf.settings is AppConf._meta.settings
 
 
 class TypeCheckerTestCase(SimpleTestCase):
@@ -144,13 +148,6 @@ class TypeCheckerTestCase(SimpleTestCase):
             checker(self.name, None)
         assert self.message % (checker.base_type, type(None)) in str(e.value)
 
-    def test_range_type_checker(self):
-        checker = appsettings.RangeTypeChecker()
-        checker(self.name, range(0))
-        with pytest.raises(ValueError) as e:
-            checker(self.name, None)
-        assert self.message % (checker.base_type, type(None)) in str(e.value)
-
     def test_dict_type_checker(self):
         checker = appsettings.DictTypeChecker()
         checker(self.name, dict())
@@ -197,3 +194,68 @@ class TypeCheckerTestCase(SimpleTestCase):
         with pytest.raises(ValueError) as e:
             checker(self.name, {0: '0', 1: 1})  # not all values
         assert self.message_values % checker.value_type in str(e.value)
+
+
+class SettingTestCase(SimpleTestCase):
+    def test_setting(self):
+        setting = appsettings.Setting()
+        assert setting.name == ''
+        assert setting.full_name == ''
+        assert setting.default_value is None
+        assert (
+            setting.raw_value ==
+            setting.default_value ==
+            setting.value ==
+            setting.get_value() ==
+            setting.transform()
+        )
+        setting.check()
+
+    def test_setting_name(self):
+        setting = appsettings.Setting(name='Name', prefix='Prefix_')
+        assert setting.name == 'Name'
+        assert setting.prefix == 'Prefix_'
+        assert setting.full_name == 'PREFIX_NAME'
+
+    def test_setting_default_callable(self):
+        setting = appsettings.Setting(default=lambda: 1, call=True)
+        assert setting.value == 1
+        setting.call = False
+        assert callable(setting.value)
+        assert setting.value() == 1
+
+    def test_boolean_setting(self):
+        setting = appsettings.BooleanSetting()
+
+    def test_integer_setting(self):
+        setting = appsettings.IntegerSetting()
+
+    def test_positive_integer_setting(self):
+        setting = appsettings.PositiveIntegerSetting()
+
+    def test_float_setting(self):
+        setting = appsettings.FloatSetting()
+
+    def test_positive_float_setting(self):
+        setting = appsettings.PositiveFloatSetting()
+
+    def test_iterable_setting(self):
+        setting = appsettings.IterableSetting()
+
+    def test_string_setting(self):
+        setting = appsettings.StringSetting()
+
+    def test_list_setting(self):
+        setting = appsettings.ListSetting()
+
+    def test_set_setting(self):
+        setting = appsettings.SetSetting()
+
+    def test_tuple_setting(self):
+        setting = appsettings.TupleSetting()
+
+    def test_dict_setting(self):
+        setting = appsettings.DictSetting()
+
+    def test_object_setting(self):
+        setting = appsettings.ObjectSetting()
