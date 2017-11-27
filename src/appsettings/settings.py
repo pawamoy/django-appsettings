@@ -82,42 +82,42 @@ class TupleTypeChecker(TypeChecker):
 
 class StringListTypeChecker(TupleTypeChecker):
     def __init__(self):
-        super(StringListTypeChecker, self).__init__(str, list)
+        super(StringListTypeChecker, self).__init__(list, str)
 
 
 class StringSetTypeChecker(TupleTypeChecker):
     def __init__(self):
-        super(StringSetTypeChecker, self).__init__(str, set)
+        super(StringSetTypeChecker, self).__init__(set, str)
 
 
 class IntegerListTypeChecker(TupleTypeChecker):
     def __init__(self):
-        super(IntegerListTypeChecker, self).__init__(int, list)
+        super(IntegerListTypeChecker, self).__init__(list, int)
 
 
 class IntegerSetTypeChecker(TupleTypeChecker):
     def __init__(self):
-        super(IntegerSetTypeChecker, self).__init__(int, set)
+        super(IntegerSetTypeChecker, self).__init__(set, int)
 
 
 class BooleanListTypeChecker(TupleTypeChecker):
     def __init__(self):
-        super(BooleanListTypeChecker, self).__init__(bool, list)
+        super(BooleanListTypeChecker, self).__init__(list, bool)
 
 
 class BooleanSetTypeChecker(TupleTypeChecker):
     def __init__(self):
-        super(BooleanSetTypeChecker, self).__init__(bool, set)
+        super(BooleanSetTypeChecker, self).__init__(set, bool)
 
 
 class FloatListTypeChecker(TupleTypeChecker):
     def __init__(self):
-        super(FloatListTypeChecker, self).__init__(float, list)
+        super(FloatListTypeChecker, self).__init__(list, float)
 
 
 class FloatSetTypeChecker(TupleTypeChecker):
     def __init__(self):
-        super(FloatSetTypeChecker, self).__init__(float, set)
+        super(FloatSetTypeChecker, self).__init__(set, float)
 
 
 # Dict type checkers ----------------------------------------------------------
@@ -258,21 +258,21 @@ class PositiveFloatSetting(Setting):
 
 
 class ListSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix='', call=True):
+    def __init__(self, name='', default=lambda: list(), required=False, prefix='', call=True):
         super(ListSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call=call, checker=ListTypeChecker())
 
 
 class SetSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix='', call=True):
+    def __init__(self, name='', default=lambda: set(), required=False, prefix='', call=True):
         super(SetSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call=call, checker=SetTypeChecker())
 
 
 class DictSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix='', call=True):
+    def __init__(self, name='', default=lambda: dict(), required=False, prefix='', call=True):
         super(DictSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call=call, checker=DictTypeChecker())
@@ -280,56 +280,56 @@ class DictSetting(Setting):
 
 # Tuple settings --------------------------------------------------------------
 class StringListSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix='', call=True):
+    def __init__(self, name='', default=lambda: list(), required=False, prefix='', call=True):
         super(StringListSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call=call, checker=StringListTypeChecker())
 
 
 class StringSetSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix='', call=True):
+    def __init__(self, name='', default=lambda: set(), required=False, prefix='', call=True):
         super(StringSetSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call=call, checker=StringSetTypeChecker())
 
 
 class IntegerListSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix='', call=True):
+    def __init__(self, name='', default=lambda: list(), required=False, prefix='', call=True):
         super(IntegerListSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call=call, checker=IntegerListTypeChecker())
 
 
 class IntegerSetSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix='', call=True):
+    def __init__(self, name='', default=lambda: set(), required=False, prefix='', call=True):
         super(IntegerSetSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call=call, checker=IntegerSetTypeChecker())
 
 
 class BooleanListSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix='', call=True):
+    def __init__(self, name='', default=lambda: list(), required=False, prefix='', call=True):
         super(BooleanListSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call=call, checker=BooleanListTypeChecker())
 
 
 class BooleanSetSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix='', call=True):
+    def __init__(self, name='', default=lambda: set(), required=False, prefix='', call=True):
         super(BooleanSetSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call=call, checker=BooleanSetTypeChecker())
 
 
 class FloatListSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix='', call=True):
+    def __init__(self, name='', default=lambda: list(), required=False, prefix='', call=True):
         super(FloatListSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call=call, checker=FloatListTypeChecker())
 
 
 class FloatSetSetting(Setting):
-    def __init__(self, name='', default=None, required=False, prefix='', call=True):
+    def __init__(self, name='', default=lambda: set(), required=False, prefix='', call=True):
         super(FloatSetSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call=call, checker=FloatSetTypeChecker())
