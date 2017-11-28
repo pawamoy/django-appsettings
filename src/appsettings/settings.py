@@ -144,10 +144,16 @@ class DictTypeChecker(TypeChecker):
 
 # Complex type checkers -------------------------------------------------------
 class ObjectTypeChecker(StringTypeChecker):
-    # TODO: maybe check that the object actually exists,
-    # see http://stackoverflow.com/questions/14050281
-    # TODO: check that value is a valid Python path (no slash, etc.)
-    pass
+    def __init__(self, empty=True):
+        super(StringTypeChecker, self).__init__(
+            str, None, min_length=None, max_length=None, empty=empty)
+
+    def __call__(self, name, value):
+        super(ObjectTypeChecker, self).__call__(name, value)
+        # TODO: maybe check that value is a valid Python path
+        # https://stackoverflow.com/questions/47537921
+        # TODO: maybe check that the object actually exists
+        # https://stackoverflow.com/questions/14050281
 
 
 # Settings ====================================================================
@@ -163,8 +169,9 @@ class Setting(object):
                  default=None,
                  required=False,
                  prefix='',
-                 call=True,
-                 checker=lambda n, v: None):
+                 call_default=True,
+                 transform_default=False,
+                 checker=None):
         """
         Initialization method.
 
@@ -178,10 +185,21 @@ class Setting(object):
         """
         self.name = name
         self.default = default
-        self.call = call
+        self.call_default = call_default
+        self.transform_default = transform_default
         self.required = required
         self.prefix = prefix
-        self.checker = checker
+
+        if checker is None:
+            if not hasattr(self, 'checker'):
+                self.checker = lambda n, v: None
+        else:
+            self.checker = checker
+
+    def _reraise_if_required(self, err):
+        if self.required:
+            raise AttributeError('%s setting is required and %s' % (
+                self.full_name, err))
 
     @property
     def full_name(self):
@@ -189,20 +207,14 @@ class Setting(object):
 
     @property
     def default_value(self):
-        if callable(self.default) and self.call:
+        if callable(self.default) and self.call_default:
             return self.default()
         return self.default
 
     @property
     def raw_value(self):
         """Get the setting from ``django.conf.settings``."""
-        try:
-            return getattr(settings, self.full_name)
-        except AttributeError:
-            if self.required:
-                raise AttributeError(
-                    'setting %s is required.' % self.full_name)
-            return self.default_value
+        return getattr(settings, self.full_name)
 
     @property
     def value(self):
@@ -210,104 +222,118 @@ class Setting(object):
         return self.get_value()
 
     def get_value(self):
-        return self.transform()
+        try:
+            value = self.raw_value
+        except AttributeError as err:
+            self._reraise_if_required(err)
+            default_value = self.default_value
+            if self.transform_default:
+                return self.transform(default_value)
+            return default_value
+        else:
+            return self.transform(value)
 
     def check(self):
         """Check the setting. Raise exception if incorrect."""
-        self.checker(self.full_name, self.raw_value)
+        try:
+            value = self.raw_value
+        except AttributeError as err:
+            self._reraise_if_required(err)
+        else:
+            self.checker(self.full_name, value)
 
-    def transform(self):
+    def transform(self, value):
         """Get the setting and return it transformed."""
-        return self.raw_value
+        return value
 
 
 class BooleanSetting(Setting):
     def __init__(self, name='', default=True, required=False,
-                 prefix='', call=True):
+                 prefix='', call_default=True):
         super(BooleanSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call=call, checker=BooleanTypeChecker())
+            call_default=call_default, checker=BooleanTypeChecker())
 
 
 class IntegerSetting(Setting):
     def __init__(self, name='', default=0, required=False,
-                 prefix='', call=True, **checker_kwargs):
+                 prefix='', call_default=True, **checker_kwargs):
         super(IntegerSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call=call, checker=IntegerTypeChecker(**checker_kwargs))
+            call_default=call_default, checker=IntegerTypeChecker(**checker_kwargs))
 
 
 class PositiveIntegerSetting(Setting):
     def __init__(self, name='', default=0, required=False,
-                 prefix='', call=True, **checker_kwargs):
+                 prefix='', call_default=True, **checker_kwargs):
         super(PositiveIntegerSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call=call, checker=IntegerTypeChecker(minimum=0, **checker_kwargs))
+            call_default=call_default, checker=IntegerTypeChecker(minimum=0, **checker_kwargs))
 
 
 class FloatSetting(Setting):
     def __init__(self, name='', default=0.0, required=False,
-                 prefix='', call=True, **checker_kwargs):
+                 prefix='', call_default=True, **checker_kwargs):
         super(FloatSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call=call, checker=FloatTypeChecker(**checker_kwargs))
+            call_default=call_default, checker=FloatTypeChecker(**checker_kwargs))
 
 
 class PositiveFloatSetting(Setting):
     def __init__(self, name='', default=0.0, required=False,
-                 prefix='', call=True, **checker_kwargs):
+                 prefix='', call_default=True, **checker_kwargs):
         super(PositiveFloatSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call=call, checker=FloatTypeChecker(minimum=0.0, **checker_kwargs))
+            call_default=call_default, checker=FloatTypeChecker(minimum=0.0, **checker_kwargs))
 
 
 class IterableSetting(Setting):
-    def __init__(self, name='', default='', required=False,
-                 prefix='', call=True, **checker_kwargs):
+    def __init__(self, name='', default=None, required=False,
+                 prefix='', call_default=True, **checker_kwargs):
         super(IterableSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call=call, checker=IterableTypeChecker(
+            call_default=call_default, checker=IterableTypeChecker(
                 iter_type=object, **checker_kwargs))
 
 
 class StringSetting(Setting):
     def __init__(self, name='', default='', required=False,
-                 prefix='', call=True, **checker_kwargs):
+                 prefix='', call_default=True, **checker_kwargs):
         super(StringSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call=call, checker=StringTypeChecker(**checker_kwargs))
+            call_default=call_default, checker=StringTypeChecker(**checker_kwargs))
 
 
 class ListSetting(Setting):
     def __init__(self, name='', default=lambda: list(), required=False,
-                 prefix='', call=True, **checker_kwargs):
+                 prefix='', call_default=True, **checker_kwargs):
         super(ListSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call=call, checker=ListTypeChecker(**checker_kwargs))
+            call_default=call_default, checker=ListTypeChecker(**checker_kwargs))
 
 
 class SetSetting(Setting):
     def __init__(self, name='', default=lambda: set(), required=False,
-                 prefix='', call=True, **checker_kwargs):
+                 prefix='', call_default=True, **checker_kwargs):
         super(SetSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call=call, checker=SetTypeChecker(**checker_kwargs))
+            call_default=call_default, checker=SetTypeChecker(**checker_kwargs))
 
 
 class TupleSetting(Setting):
     def __init__(self, name='', default=lambda: tuple(), required=False,
-                 prefix='', call=True, **checker_kwargs):
+                 prefix='', call_default=True, **checker_kwargs):
         super(TupleSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call=call, checker=SetTypeChecker(**checker_kwargs))
+            call_default=call_default, checker=SetTypeChecker(**checker_kwargs))
 
 
 class DictSetting(Setting):
     def __init__(self, name='', default=lambda: dict(), required=False,
-                 prefix='', call=True, **checker_kwargs):
+                 prefix='', call_default=True, **checker_kwargs):
         super(DictSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call=call, checker=DictTypeChecker(**checker_kwargs))
+            call_default=call_default, checker=DictTypeChecker(**checker_kwargs))
 
 
 # Complex settings ------------------------------------------------------------
@@ -315,16 +341,30 @@ class ObjectSetting(Setting):
     """Setting to import an object given its Python path (a.b.c)."""
 
     def __init__(self, name='', default=None, required=False,
-                 prefix='', call=False):
+                 prefix='', call_default=False, **checker_kwargs):
         super(ObjectSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call=call, checker=ObjectTypeChecker())
+            call_default=call_default, checker=ObjectTypeChecker(**checker_kwargs))
 
-    def transform(self):
-        path = self.raw_value
-        if path is None:
+    def transform(self, path):
+        if path is None or not path:
             return None
-        module_name = '.'.join(path.split('.')[:-1])
-        module_obj = importlib.import_module(name=module_name)
-        obj = getattr(module_obj, path.split('.')[-1])
-        return obj
+
+        obj_parent_modules = path.split('.')
+        objects = [obj_parent_modules.pop(-1)]
+
+        while True:
+            try:
+                parent_module_path = '.'.join(obj_parent_modules)
+                parent_module = importlib.import_module(name=parent_module_path)
+                break
+            except ImportError:
+                if len(obj_parent_modules) == 1:
+                    raise ImportError("No module named '%s'" %
+                                      obj_parent_modules[0])
+                objects.insert(0, obj_parent_modules.pop(-1))
+
+        current_object = parent_module
+        for obj in objects:
+            current_object = getattr(current_object, obj)
+        return current_object

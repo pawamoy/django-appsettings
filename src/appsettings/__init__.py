@@ -94,7 +94,7 @@ class _Metaclass(type):
                 _meta.settings[name] = setting
                 # populate name
                 if setting.name == '':
-                    setting.name = name.upper()
+                    setting.name = name
                 # populate prefix
                 if setting.prefix == '':
                     setting.prefix = _meta.setting_prefix
@@ -117,6 +117,9 @@ class AppSettings(six.with_metaclass(_Metaclass)):
 
     def __init__(self):
         """Initialization method."""
+        if self.__class__ == AppSettings:
+            raise RuntimeError('Do not use AppSettings class as itself, '
+                               'use it as a base for subclasses')
         setting_changed.connect(self.invalidate_cache, dispatch_uid=id(self))
         self._cache = {}
 
