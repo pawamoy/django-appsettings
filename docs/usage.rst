@@ -1,122 +1,119 @@
 Usage
 =====
 
-``Setting`` class
------------------
+Declaring your settings
+-----------------------
 
-A ``Setting`` is described by a ``name``, a ``default`` value, and a ``prefix``.
-The prefix and the name form the full name of the setting. This full name is used
-to declare it in the project's settings. Prefix is generally the name of the
-application or project, but it can be left empty. Also name will by default
-be the variable name in uppercase.
+To declare your application setting, create a settings class inheriting from
+``appsettings.AppSettings``:
 
 .. code:: python
 
-    # same as verbosity_level = Setting(prefix='verbose_app_')
-    verbosity_level = Setting(name='verbosity_level', prefix='verbose_app_')
+    import appsettings
 
-    # in project's settings (must be uppercase)
-    VERBOSE_APP_VERBOSITY_LEVEL = 'extremely_verbose'
 
-The default value is used if the setting was not declared. The setting
-can also be declared ``required``, and in that case it makes no sense to give
-it a default value (but it's tolerated). By default, settings are all optional
-(``required=False``). A setting that is required and not declared will raise
-an ``AttributeError``.
+    class MySettings(appsettings.AppSettings):
+        boolean_setting = appsettings.BooleanSetting(default=False)
+        required_setting = appsettings.StringSetting(required=True)
+        named_setting = appsettings.IntegerSetting(name='integer_setting')
+        prefixed_setting = appsettings.ListSetting(prefix='my_app_')
 
-A setting disposes of four methods:
+        class Meta:
+            setting_prefix = 'app_'
 
-- ``get_raw``: get the setting given in project's settings;
-- ``get``: return the result of ``transform``;
-- ``check``: check the raw setting (not transformed).
-- ``transform``: get the raw setting and apply transformation.
+In this example, we declared four different settings in our class:
+``boolean_setting``, ``required_setting``, ``named_setting``, and
+``prefixed_setting``.
 
-When sub-classing ``Setting`` to define a custom setting,
-override ``check`` and ``transform`` methods like this:
+The corresponding variable names in a Django project's settings file will be:
+- ``boolean_setting``: ``APP_BOOLEAN_SETTING``, because no name was given.
+- ``required_setting``: ``APP_REQUIRED_SETTING``, because no name was given.
+- ``named_setting``: ``APP_INTEGER_SETTING``, because a name was given.
+- ``prefixed_setting``: ``MY_APP_PREFIXED_SETTING``, because we overrode the class prefix.
+
+We could as well give both name and prefix to customize entirely the corresponding
+variable name in the settings file.
+
+Using a callable as default value
+'''''''''''''''''''''''''''''''''
+
+Sometimes you may want to pass a callable as a default value. To ensure the
+callable is called, or to prevent it, use the ``call_default`` parameter:
 
 .. code:: python
 
-    class RegexSetting(Setting):
-        def check():
-            value = self.get_raw()
-            if value != self.default:  # always allow default to pass
-                re_type = type(re.compile(r'^$'))
-                if not isinstance(value, (re_type, str)):
-                    raise ValueError('%s must be a a string or a compiled regex '
-                                     '(use re.compile)' % self.full_name)
-
-        def transform(self):
-            value = self.get_raw()
-            if isinstance(value, str):
-                value = re.compile(value)
-            return value
+    from datetime import datetime
+    import appsettings
 
 
-``AppSettings`` class
+    class MySettings(appsettings.AppSettings):
+        # expect a time value, allow calling
+        first_access = appsettings.Setting(default=datetime.now, call_default=True)
+
+        # expect a function returning current time, prevent calling
+        now_function = appsettings.Setting(default=datetime.now, call_default=False)
+
+
+``call_default`` is True by default on every setting class except ``ObjectSetting``.
+
+.. important::
+
+    Note that ``call_default`` is only used when the related setting is missing
+    from the project settings!
+
+Checking the settings
 ---------------------
 
-The ``AppSettings`` class is just a container for settings.
-Additionally, it provides a ``check`` method to check every
-declared settings. You can also pass a setting prefix for every setting in
-a meta class. Instantiating an ``AppSettings`` will replace every settings
-by their transformed value.
-
-Here is an example of settings declaration in ``apps.py``:
+In my opinion, the best place to check your application settings is in your
+application configuration class:
 
 .. code:: python
 
-    from django.apps import AppConfig
-    import appsettings as aps
+    import django
+    import appsettings
 
-    class MyAppConfig(AppConfig):
+
+    class AppSettings(appsettings.AppSettings):
+        string_list = appsettings.ListSetting(item_type=str, empty=False, required=True, max_length=4)
+
+        class Meta:
+            setting_prefix = 'my_app_'
+
+
+    class AppConfig(django.apps.AppConfig):
         name = 'my_app'
         verbose_name = 'My Application'
 
         def ready(self):
             # check every settings at startup, raise one exception
-            # with all errors in its message
+            # with all errors as one message
             AppSettings.check()
 
+In the above example, if ``MY_APP_STRING_LIST`` is not defined, or if it is not
+a list object, or if it's empty, or if it has more than 4 elements,
+``AppSettings.check()`` will raise a ``ImproperlyConfigured`` exception.
+If you had more settings declared in your settings class, then the
+``ImproperlyConfigured`` exception would be raised with a message being a
+concatenation of the first exception for each setting checked.
 
-    class AppSettings(aps.AppSettings):
-        always_use_ice_cream = aps.BooleanSetting(default=True)
-        attr_name = aps.StringSetting(name='SETTING_NAME')
-        regex = RegexSetting()  # declared before
-
-        # if you need to import a python object (module/class/method)
-        imported_object = aps.ImportedObjectSetting(default='app.default.object')
-
-        class Meta:
-            setting_prefix = 'ASH_'  # settings must be prefixed with ASH_
-
-In the project settings
------------------------
+You can also check each setting individually, for example:
 
 .. code:: python
 
-    import re
+    for setting in AppSettings.settings.values():
+        setting_object.check()
 
-    ASH_ALWAYS_USE_ICE_CREAM = False
-    ASH_SETTING_NAME = 'some string'  # attr_name in AppSettings class
-    ASH_REGEX = re.compile(r'^$')
-    ASH_IMPORTED_OBJECT = 'package.module.object'
+If the setting's value is invalid, it will raise an exception
+(usually ``ValueError``).
 
-In the rest of your code
-------------------------
+Using the settings in your code
+-------------------------------
 
-.. code:: python
+Testing the settings
+--------------------
 
-    from .apps import AppSettings
+Writing your own setting class
+------------------------------
 
-    # instantiation will load and transform every settings
-    app_settings = AppSettings()
-    app_settings.always_use_ice_cream == False
-    app_settings.attr_name == 'some string'
-
-    # or, and in order to work with tests overriding settings
-    ice_cream = AppSettings.always_use_ice_cream.get()  # to get ASH_ALWAYS_USE_ICE_CREAM setting dynamically
-    my_python_object = AppSettings.imported_object.get()
-
-Running ``AppSettings.check()`` will raise an ``ImproperlyConfigured``
-exception if at least one of the settings' ``check`` methods raised an
-exception. It will also print all caught exceptions.
+Writing your own type checker
+-----------------------------

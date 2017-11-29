@@ -54,6 +54,27 @@ Because none of the other suited my needs!
 
 This one is simple to use, and works with unit tests overriding settings.
 
+Installation
+============
+
+::
+
+    pip install django-app-settings
+
+Documentation
+=============
+
+`On ReadTheDocs`_
+
+.. _`On ReadTheDocs`: http://django-appsettings.readthedocs.io/
+
+Development
+===========
+
+To run all the tests: ``tox``. See `CONTRIBUTING`_.
+
+.. _`CONTRIBUTING`: https://github.com/Genida/django-appsettings/blob/master/CONTRIBUTING.rst
+
 Quick usage
 ===========
 
@@ -136,21 +157,3 @@ Software licensed under `ISC`_ license.
 
 .. _ISC: https://www.isc.org/downloads/software-support-policy/isc-license/
 
-Installation
-============
-
-::
-
-    pip install django-app-settings
-
-Documentation
-=============
-
-`On ReadTheDocs`_
-
-.. _`On ReadTheDocs`: http://django-appsettings.readthedocs.io/
-
-Development
-===========
-
-To run all the tests: ``tox``
