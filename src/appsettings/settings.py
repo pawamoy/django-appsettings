@@ -22,7 +22,7 @@ class TypeChecker(object):
     be created by inheriting from this base class.
     """
 
-    def __init__(self, base_type):
+    def __init__(self, base_type=None):
         """
         Initialization method.
 

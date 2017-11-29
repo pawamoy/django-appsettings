@@ -4,7 +4,7 @@ Usage
 Declaring your settings
 -----------------------
 
-To declare your application setting, create a settings class inheriting from
+To declare your application settings, create a settings class inheriting from
 ``appsettings.AppSettings``:
 
 .. code:: python
@@ -26,6 +26,7 @@ In this example, we declared four different settings in our class:
 ``prefixed_setting``.
 
 The corresponding variable names in a Django project's settings file will be:
+
 - ``boolean_setting``: ``APP_BOOLEAN_SETTING``, because no name was given.
 - ``required_setting``: ``APP_REQUIRED_SETTING``, because no name was given.
 - ``named_setting``: ``APP_INTEGER_SETTING``, because a name was given.
@@ -37,7 +38,7 @@ variable name in the settings file.
 Using a callable as default value
 '''''''''''''''''''''''''''''''''
 
-Sometimes you may want to pass a callable as a default value. To ensure the
+Sometimes you may want to pass a callable as a default value. To ensure that the
 callable is called, or to prevent it, use the ``call_default`` parameter:
 
 .. code:: python
@@ -47,7 +48,7 @@ callable is called, or to prevent it, use the ``call_default`` parameter:
 
 
     class MySettings(appsettings.AppSettings):
-        # expect a time value, allow calling
+        # expect a datetime value, allow calling
         first_access = appsettings.Setting(default=datetime.now, call_default=True)
 
         # expect a function returning current time, prevent calling
@@ -64,7 +65,7 @@ callable is called, or to prevent it, use the ``call_default`` parameter:
 Checking the settings
 ---------------------
 
-In my opinion, the best place to check your application settings is in your
+The best place to check your application settings is in your
 application configuration class:
 
 .. code:: python
@@ -74,7 +75,10 @@ application configuration class:
 
 
     class AppSettings(appsettings.AppSettings):
-        string_list = appsettings.ListSetting(item_type=str, empty=False, required=True, max_length=4)
+        string_list = appsettings.ListSetting(item_type=str,
+                                              empty=False,
+                                              required=True,
+                                              max_length=4)
 
         class Meta:
             setting_prefix = 'my_app_'
@@ -101,7 +105,7 @@ You can also check each setting individually, for example:
 .. code:: python
 
     for setting in AppSettings.settings.values():
-        setting_object.check()
+        setting.check()
 
 If the setting's value is invalid, it will raise an exception
 (usually ``ValueError``).
@@ -109,11 +113,183 @@ If the setting's value is invalid, it will raise an exception
 Using the settings in your code
 -------------------------------
 
+Once your settings class is ready, you will be able to instantiate it to
+benefit from its simplicity of use and its caching feature:
+
+.. code:: python
+
+    # let say you declared your Settings class in apps.py
+    from .apps import Settings
+
+    settings = Settings()
+
+    print(settings.string_list[0])
+    print(settings.now_function())
+    print(settings.first_access.day)
+
 Testing the settings
 --------------------
+
+When you instantiate your settings class with ``settings = Settings()``,
+the ``invalidate_cache`` method of the instance is automatically connected
+to the ``setting_changed`` signal sent by Django. It means that you can test
+different values for your settings without worrying about invalidating the
+cache each time.
+
+.. code:: python
+
+    from django.test import SimpleTestCase, override_settings
+    from my_app.apps import Settings
+
+
+    class MainTestCase(TestCase):
+        def setUp(self):
+            self.settings = Settings()
+
+        def test_some_settings(self):
+            # first fetch
+            assert self.settings.string_list[0] == 'hello'
+
+            # django will send setting_changed signal, cache will be cleaned
+            with override_settings(MY_APP_STRING_LIST=['hello world!']):
+                assert len(self.settings) == 1
+
+            # signal sent again
+            with override_settings(MY_APP_STRING_LIST=['good morning', 'world', '!']):
+                assert len(self.settings) == 3
+
+            # signal is also sent when with clause ends
+            assert self.settings.string_list[0] == 'hello'
+
+        # it works the same way with decorator
+        @override_settings(MY_APP_STRING_LIST=['bye'])
+        def test_string_list(self):
+            assert 'bye' in self.settings.string_list
 
 Writing your own setting class
 ------------------------------
 
+At some point you may want to have more complex settings. You can customize
+how the setting is checked, but also how the value is transformed before being
+returned.
+
+The first way to customize the check method is to pass a callable
+in the ``checker`` parameter of the setting. This callable must accepts
+two parameters: name and value.
+
+.. code:: python
+
+    import re
+    import appsettings
+
+    def regex_checker(name, value):
+        re_type = type(re.compile(r'^$'))
+        if not isinstance(value, (re_type, str)):
+            # raise whatever exception
+            raise ValueError('%s must be a a string or a compiled regex '
+                             '(use re.compile)' % name)
+
+
+    setting = appsettings.Setting(checker=regex_checker)
+
+.. important::
+
+    Note that only the ``appsettings.Setting`` class accepts the ``checker``
+    parameter! Other subclasses like ``appsettings.PositiveIntegerSetting``
+    already have a custom checker and therefore do not allow to change it.
+
+The second way is to subclass ``appsettings.Setting`` and write a custom
+``checker`` method:
+
+.. code:: python
+
+    import re
+    import appsettings
+
+
+    class RegexSetting(appsettings.Setting):
+        def checker(name, value):
+            re_type = type(re.compile(r'^$'))
+            if not isinstance(value, (re_type, str)):
+                # raise whatever exception
+                raise ValueError('%s must be a a string or a compiled regex '
+                                 '(use re.compile)' % name)
+
+
+    setting = RegexSetting()
+
 Writing your own type checker
------------------------------
+'''''''''''''''''''''''''''''
+
+The third way to customize how the setting is checked is to create
+a new ``TypeChecker`` class:
+
+.. code:: python
+
+    import re
+    import appsettings
+
+
+    # option 1: passing a specific base_type (can be a tuple with several types)
+    class RegexTypeChecker1(appsettings.TypeChecker):
+        def __init__(self):
+            re_type = type(re.compile(r'^$'))
+            super(BooleanTypeChecker, self).__init__(base_type=(str, re_type))
+
+
+    setting1 = appsettings.Setting(checker=RegexTypeChecker1())
+
+
+    # option 2: completely overriding the __call__ method
+    class RegexTypeChecker2(appsettings.TypeChecker):
+        def __call__(self, name, value):
+            re_type = type(re.compile(r'^$'))
+            if not isinstance(value, (re_type, str)):
+                # raise whatever exception
+                raise ValueError('%s must be a a string or a compiled regex '
+                                 '(use re.compile)' % name)
+
+
+    setting2 = appsettings.Setting(checker=RegexTypeChecker2())
+
+
+    # option 3: combining both type checker and setting class
+    class RegexSetting(appsettings.Setting):
+        def __init__(
+                self, name='', default=re.compile(r'^$'), required=False,
+                prefix='', call_default=True, transform_default=False):
+            super(RegexSetting, self).__init__(
+                name=name, default=default, required=required, prefix=prefix,
+                call_default=call_default, transform_default=transform_default,
+                checker=RegexTypeChecker1())
+
+
+    setting3 = RegexSetting()
+
+
+Extending type checker and setting classes
+''''''''''''''''''''''''''''''''''''''''''
+
+In the previous example, WIP
+
+
+
+.. code:: python
+
+    import re
+    import appsettings
+
+
+    class RegexSetting(appsettings.Setting):
+        def regex_checker(name, value):
+            re_type = type(re.compile(r'^$'))
+            if not isinstance(value, (re_type, str)):
+                # raise whatever exception
+                raise ValueError('%s must be a a string or a compiled regex '
+                                 '(use re.compile)' % name)
+
+        def transform(self, value):
+            # ensure it always returns a compiled regex
+            if isinstance(value, str):
+                value = re.compile(value)
+            return value

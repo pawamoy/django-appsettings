@@ -457,6 +457,9 @@ class AppSettingsTestCase(SimpleTestCase):
             assert 'my_int' in appconf._cache
             assert appconf._cache['my_int'] == 1
 
+        assert 'my_int' not in appconf._cache
+        assert appconf.my_int == 0
+
     def test_check(self):
         assert appsettings.AppSettings.check() is None
 
