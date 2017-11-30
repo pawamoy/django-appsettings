@@ -152,11 +152,11 @@ cache each time.
 
             # django will send setting_changed signal, cache will be cleaned
             with override_settings(MY_APP_STRING_LIST=['hello world!']):
-                assert len(self.settings) == 1
+                assert len(self.settings.string_list) == 1
 
             # signal sent again
             with override_settings(MY_APP_STRING_LIST=['good morning', 'world', '!']):
-                assert len(self.settings) == 3
+                assert len(self.settings.string_list) == 3
 
             # signal is also sent when with clause ends
             assert self.settings.string_list[0] == 'hello'
@@ -270,9 +270,70 @@ a new ``TypeChecker`` class:
 Extending type checker and setting classes
 ''''''''''''''''''''''''''''''''''''''''''
 
-In the previous example, WIP
+In the previous example, we combined our own type checker to our own setting
+class. But we can extend it furthermore by adding parameters to the type
+checker, or by inheriting from previous type checkers.
+
+.. code:: python
+
+    from datetime import datetime
+    import re
+    import appsettings
 
 
+    class DateTimeTupleTypeChecker(appsettings.TupleTypeChecker):
+        def __init__(
+                self, min_length=None, max_length=None, empty=True,
+                maximum=None):
+            # here we restrict the parent TupleTypeChecker parameters
+            # by hard-coding item_type=datetime
+            super(DateTimeTupleTypeChecker, self).__init__(
+                item_type=datetime, min_length=min_length,
+                max_length=max_length, empty=empty)
+            # and here we add our custom parameters
+            self.maximum = maximum
+
+        # now we are able to extend the check
+        def __call__(self, name, value):
+            super(DateTimeTupleTypeChecker, self).__call__(name, value)
+            if isinstance(self.maximum, datetime):
+                for i, item in enumerate(value):
+                    if item > self.maximum:
+                        raise ValueError(
+                            'item %d (%s) in setting %s '
+                            'is above maximum %s' % (
+                                i, item, name, self.maximum))
+
+
+    class DateTimeTupleSetting(appsettings.Setting):
+        def __init__(
+                self, name='', default=lambda: tuple(), prefix='',
+                required=False, call_default=True, transform_default=False,
+                **checker_kwargs):
+            # we simply hook our type checker into our setting class
+            super(DateTimeTupleSetting, self).__init__(
+                name=name, default=default, required=required, prefix=prefix,
+                call_default=call_default, transform_default=transform_default,
+                checker=DateTimeTupleTypeChecker(**checker_kwargs))
+
+
+    setting = DateTimeTupleSetting(
+        name='dates_to_remember', default=lambda: (datetime.now(), ),
+        min_length=1, maximum=datetime(year=2030, month=1, day=1)
+
+
+    # and the related setting would be
+    DATES_TO_REMEMBER = (
+        datetime(year=2017, month=11, day=30),  # the day I wrote this line
+    )
+
+
+Transforming setting values
+'''''''''''''''''''''''''''
+
+You may want your setting to be less strict about types, but make sure it
+always return the same type of object. This is what the transform method is
+here for:
 
 .. code:: python
 
@@ -280,16 +341,54 @@ In the previous example, WIP
     import appsettings
 
 
-    class RegexSetting(appsettings.Setting):
-        def regex_checker(name, value):
+    # our type checker
+    class RegexTypeChecker(appsettings.TypeChecker):
+        def __init__(self, **kwargs):
             re_type = type(re.compile(r'^$'))
-            if not isinstance(value, (re_type, str)):
-                # raise whatever exception
-                raise ValueError('%s must be a a string or a compiled regex '
-                                 '(use re.compile)' % name)
+            # allow both str and re_type types
+            super(BooleanTypeChecker, self).__init__(base_type=(str, re_type))
+
+
+    # our setting class
+    class RegexSetting(appsettings.Setting):
+        def __init__(
+                self, name='', default=re.compile(r'^$'), required=False,
+                prefix='', call_default=True, transform_default=False,
+                **checker_kwargs):
+            super(RegexSetting, self).__init__(
+                name=name, default=default, required=required, prefix=prefix,
+                call_default=call_default, transform_default=transform_default,
+                checker=RegexTypeChecker(**checker_kwargs))
 
         def transform(self, value):
             # ensure it always returns a compiled regex
             if isinstance(value, str):
                 value = re.compile(value)
             return value
+
+
+    setting = RegexSetting()
+
+
+You can also control whether the default value has to be transformed or not
+with the ``transform_default`` parameter. Using the above example, you could
+then instantiate your setting like this:
+
+.. code:: python
+
+    setting = RegexSetting(default=r'^my (regular)? expression$',
+                           transform_default=True)
+
+
+You can as well combine ``call_default`` and ``transform_default``:
+
+.. code:: python
+
+    def regex_string_generator():
+        return r'^my (regular)? expression$'
+
+    setting = RegexSetting(default=regex_string_generator,
+                           call_default=True,
+                           transform_default=True)
+
+.. important:: Transformation is always done **after** calling the default value.
