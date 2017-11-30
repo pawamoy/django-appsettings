@@ -46,7 +46,7 @@ setup(
     zip_safe=False,
     classifiers=[
         # http://pypi.python.org/pypi?%3Aaction=list_classifiers
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: ISC License (ISCL)',
         'Operating System :: Unix',
@@ -65,7 +65,7 @@ setup(
         'Topic :: Utilities',
     ],
     keywords=[
-        'django-appsettings',
+        'django', 'app', 'settings',
     ],
     install_requires=[
         'six'

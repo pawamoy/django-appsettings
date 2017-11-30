@@ -54,130 +54,6 @@ Because none of the other suited my needs!
 
 This one is simple to use, and works with unit tests overriding settings.
 
-Quick usage
-===========
-
-.. code:: python
-
-    # my_package/apps.py
-
-    from django.apps import AppConfig
-    import appsettings as aps
-
-
-    class AppSettings(aps.AppSettings):
-        my_setting = aps.Setting(name='basic_setting', default=25)
-
-        required_setting = aps.Setting(required=True)  # name='REQUIRED_SETTING'
-
-        typed_setting = aps.StringSetting(prefix='string_')
-        # -> typed_setting.full_name == 'STRING_TYPED_SETTING'
-
-        custom_setting = RegexSetting()  # -> see RegexSetting class below
-
-        class Meta:
-          # default prefix for every settings
-          setting_prefix = 'example_'
-
-
-    class RegexSetting(aps.Setting):
-        def check(self):
-            value = self.get_raw()  # should always be called to check required condition
-            if value != self.default:  # always allow default to pass
-                re_type = type(re.compile(r'^$'))
-                if not isinstance(value, (re_type, str)):
-                    # raise whatever exception
-                    raise ValueError('%s must be a a string or a compiled regex '
-                                     '(use re.compile)' % self.full_name)
-
-        def transform(self):
-            value = self.get_raw()
-            # ensure it always return a compiled regex
-            if isinstance(value, str):
-                value = re.compile(value)
-            return value
-
-
-    class MyAppConfig(AppConfig):
-        name = 'my_app'
-        verbose_name = 'My Application'
-
-        def ready(self):
-            # check every settings at startup, raise one exception
-            # with all errors in its message
-            AppSettings.check()
-
-
-.. code:: python
-
-    # django_project/settings.py
-    EXAMPLE_BASIC_SETTING = 26
-    EXAMPLE_REQUIRED_SETTING = 'something'
-
-.. code:: python
-
-    # my_package/other_module.py
-
-    from .apps import AppSettings
-
-
-    regex = AppSettings.custom_setting.get()  # alias for transform()
-
-    # instantiate the class to load each and every settings
-    # note that appsettings object will not be affected by override_settings
-    appsettings = AppSettings()
-    appsettings.my_setting == 25  # False: 26
-
-.. code:: python
-
-    # tests/test_settings.py
-
-    from django.test import override_settings
-    from my_package.apps import AppSettings
-
-
-    def test_preloaded_settings():
-        app_conf = AppSettings()
-        assert isinstance(app_conf.typed_setting, str)
-
-
-    # you must directly use the class attributes to test overriden settings
-    def test_overridden_settings():
-        with override_settings(EXAMPLE_BASIC_SETTING=42):
-            assert AppSettings.my_setting.get() == 42
-
-
-**Settings classes:**
-
-- StringSetting: default = ''
-- IntegerSetting: default = 0
-- PositiveIntegerSetting: default = 0
-- BooleanSetting: default = False
-- FloatSetting: default = 0.0
-- PositiveFloatSetting: default = 0.0
-- ListSetting: default = []
-- SetSetting: default = ()
-- DictSetting: default = {}
-- ImportedObjectSetting: default = None
-
-*Are the following settings useful? Please tell me on Gitter.*
-
-- StringListSetting: default = []
-- StringSetSetting: default = ()
-- IntegerListSetting: default = []
-- IntegerSetSetting: default = ()
-- BooleanListSetting: default = []
-- BooleanSetSetting: default = ()
-- FloatListSetting: default = []
-- FloatSetSetting: default = ()
-
-License
-=======
-
-Software licensed under `ISC`_ license.
-
-.. _ISC: https://www.isc.org/downloads/software-support-policy/isc-license/
-
 Installation
 ============
 
@@ -195,4 +71,89 @@ Documentation
 Development
 ===========
 
-To run all the tests: ``tox``
+To run all the tests: ``tox``. See `CONTRIBUTING`_.
+
+.. _`CONTRIBUTING`: https://github.com/Genida/django-appsettings/blob/master/CONTRIBUTING.rst
+
+Quick usage
+===========
+
+.. code:: python
+
+    # Define your settings class
+    import appsettings
+
+
+    class MySettings(appsettings.AppSettings):
+        boolean_setting = appsettings.BooleanSetting(default=False)
+        required_setting = appsettings.StringSetting(required=True)
+        named_setting = appsettings.IntegerSetting(name='integer_setting')
+        prefixed_setting = appsettings.ListSetting(prefix='my_app_')
+
+        class Meta:
+            setting_prefix = 'app_'
+
+
+    # Related settings in settings.py
+    APP_INTEGER_SETTING = -24
+    MY_APP_PREFIXED_SETTING = []
+
+
+    # Instantiate your class wherever you need to
+    appconf = MySettings()
+    assert appconf.boolean_setting is False  # True (default value)
+    assert appconf.required_setting == 'hello'  # raises AttributeError
+    assert appconf.named_setting < 0  # True
+    assert appconf.prefixed_setting  # False (empty list)
+
+
+    # Values are cached to avoid perf issues
+    with override_settings(APP_REQUIRED_SETTING='hello',
+                           APP_INTEGER_SETTING=0):
+        # ...but cache is cleaned on Django's setting_changed signal
+        assert appconf.required_setting == 'hello'  # True
+        assert appconf.named_setting < 0  # False
+
+
+    # You can still access settings through the class itself (values not cached)
+    print(MySettings.boolean_setting.get_value())  # explicit call
+    print(MySettings.boolean_setting.value)  # with property
+
+
+    # Run type checking and required presence on all settings at once
+    MySettings.check()  # raises Django's ImproperlyConfigured (missing required_setting)
+    # MySettings.check() is best called in django.apps.AppConfig's ready method
+
+
+You can easily create your own Setting classes for more complex settings.
+
+.. code:: python
+
+    import re
+    import appsettings
+
+
+    class RegexSetting(appsettings.Setting):
+        def checker(self, name, value):
+            re_type = type(re.compile(r'^$'))
+            if not isinstance(value, (re_type, str)):
+                # raise whatever exception
+                raise ValueError('%s must be a a string or a compiled regex '
+                                 '(use re.compile)' % name)
+
+        def transform(self, value):
+            # ensure it always returns a compiled regex
+            if isinstance(value, str):
+                value = re.compile(value)
+            return value
+
+
+Please check the documentation to see even more advanced usage.
+
+License
+=======
+
+Software licensed under `ISC`_ license.
+
+.. _ISC: https://www.isc.org/downloads/software-support-policy/isc-license/
+

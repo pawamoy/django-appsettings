@@ -2,6 +2,43 @@
 Changelog
 =========
 
+1.0.0 (2017-11-29)
+==================
+
+First major version, going from alpha to beta status. Logic has been reworked.
+
+- An instance of a subclass of ``AppSettings`` will now dynamically get
+  settings values from project settings, and cache them. This allows to use
+  the instance the same way in code and tests, without performance loss. See
+  issue `#16`_.
+- Cache is invalidated when Django sends a ``setting_changed`` signal (i.e.
+  when using ``TestCase`` or ``override_settings``). See issue `#16`_.
+- Setting main class now accepts callable as default value, and two new
+  parameters to keep control on its behavior: ``call_default``, which tells
+  if the default value should be called (if callable) or not, and
+  ``transform_default``, which tells if the default value should be transformed
+  as well by the ``transform`` method. See issue `#17`_.
+- Settings type checkers now have custom parameters like ``max_length``,
+  ``empty`` or ``key_type``, that can be passed directly through the settings
+  classes as keyword arguments. Check the documentation for more information.
+- Settings classes have been rewritten more explicitly, using class inheritance
+  instead of hard-to-debug generators. Composed types like float lists or
+  boolean sets have been removed in favor of more flexible list, set and tuple
+  types which now accept an optional ``item_type`` parameter.
+- ``ImportedObjectSetting`` has been renamed ``ObjectSetting``, and now
+  supports object paths down to arbitrary level of nesting. Before, it only
+  supported object paths down to classes or functions, now you can for example
+  give it the path to a constant in a class within a class, itself contained
+  in a module within a package. It will work as long a the deepest module is
+  importable through ``importlib.import_module`` and each object down to the
+  last is obtainable through ``getattr`` method.
+
+Many thanks to `ziima`_ for having shared good ideas and thoughts!
+
+.. _#16: https://github.com/Genida/django-appsettings/issues/16
+.. _#17: https://github.com/Genida/django-appsettings/issues/17
+.. _ziima: https://github.com/ziima
+
 0.2.5 (2017-06-02)
 ==================
 

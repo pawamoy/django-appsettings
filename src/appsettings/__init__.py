@@ -1,30 +1,56 @@
 # -*- coding: utf-8 -*-
 
-u"""Django AppSettings package."""
+"""Django AppSettings package."""
 
 from django.core.exceptions import ImproperlyConfigured
+from django.core.signals import setting_changed
 
 import six
 
 from .settings import (
-    BooleanListSetting, BooleanSetSetting, BooleanSetting, DictSetting,
-    FloatListSetting, FloatSetSetting, FloatSetting, ImportedObjectSetting,
-    IntegerListSetting, IntegerSetSetting, IntegerSetting, ListSetting,
-    PositiveFloatSetting, PositiveIntegerSetting, SetSetting, Setting,
-    StringListSetting, StringSetSetting, StringSetting)
+    BooleanSetting, BooleanTypeChecker, DictSetting, DictTypeChecker,
+    FloatSetting, FloatTypeChecker, IntegerSetting, IntegerTypeChecker,
+    IterableSetting, IterableTypeChecker, ListSetting, ListTypeChecker,
+    ObjectSetting, ObjectTypeChecker, PositiveFloatSetting,
+    PositiveIntegerSetting, SetSetting, Setting, SetTypeChecker, StringSetting,
+    StringTypeChecker, TupleSetting, TupleTypeChecker, TypeChecker)
 
 __all__ = (
-    'BooleanListSetting', 'BooleanSetSetting', 'BooleanSetting', 'DictSetting',
-    'FloatListSetting', 'FloatSetSetting', 'FloatSetting',
-    'ImportedObjectSetting', 'IntegerListSetting', 'IntegerSetSetting',
-    'IntegerSetting', 'ListSetting', 'PositiveFloatSetting',
-    'PositiveIntegerSetting', 'SetSetting', 'Setting', 'StringListSetting',
-    'StringSetSetting', 'StringSetting')
-
+    'BooleanSetting',
+    'BooleanTypeChecker',
+    'DictSetting',
+    'DictTypeChecker',
+    'FloatSetting',
+    'FloatTypeChecker',
+    'IntegerSetting',
+    'IntegerTypeChecker',
+    'IterableSetting',
+    'IterableTypeChecker',
+    'ListSetting',
+    'ListTypeChecker',
+    'ObjectSetting',
+    'ObjectTypeChecker',
+    'PositiveFloatSetting',
+    'PositiveIntegerSetting',
+    'SetSetting',
+    'Setting',
+    'SetTypeChecker',
+    'StringSetting',
+    'StringTypeChecker',
+    'TupleSetting',
+    'TupleTypeChecker',
+    'TypeChecker'
+)
 
 
 class _Metaclass(type):
-    """``AppSettings``'s metaclass."""
+    """
+    ``AppSettings``'s metaclass.
+
+    Each setting object declared in the class will be populated (name, prefix)
+    and moved into the _meta.settings dictionary. A reference to this
+    dictionary will also be added in the class as ``settings``.
+    """
 
     def __new__(mcs, cls, bases, dct):
         """
@@ -38,53 +64,107 @@ class _Metaclass(type):
         Returns:
             class: the new created class.
         """
+        super_new = super(_Metaclass, mcs).__new__
+
+        # Also ensure initialization is only performed for subclasses
+        # of AppSettings (excluding AppSettings class itself).
+        parents = [b for b in bases if isinstance(b, _Metaclass)]
+        if not parents:
+            return super_new(mcs, cls, bases, dct)
+
         new_attr = {}
         _meta = dct.pop('Meta', type('Meta', (), {'setting_prefix': ''}))()
-        _meta.settings = []
+        _meta.settings = {}
 
-        for name, val in dct.items():
-            if isinstance(val, Setting):
-                _meta.settings.append(name)
+        for name, setting in dct.items():
+            if isinstance(setting, Setting):
+                _meta.settings[name] = setting
                 # populate name
-                if val.name is None:
-                    val.name = name.upper()
+                if setting.name == '':
+                    setting.name = name
                 # populate prefix
-                if val.prefix is None:
-                    val.prefix = _meta.setting_prefix
-                # add getter
-                # new_attr['get_%s' % name] = val.get
-                # add checker
-                # new_attr['check_%s' % name] = val.check
-            new_attr[name] = val
+                if setting.prefix == '':
+                    setting.prefix = _meta.setting_prefix
+            else:
+                new_attr[name] = setting
         new_attr['_meta'] = _meta
+        new_attr['settings'] = _meta.settings
 
-        return super(_Metaclass, mcs).__new__(mcs, cls, bases, new_attr)
+        return super_new(mcs, cls, bases, new_attr)
 
-    def __init__(cls, name, bases, dct):
+    def __getattr__(cls, item):
         """
-        Initialization method.
+        Return a setting object if it is in the ``_meta.settings`` dictionary.
 
         Args:
-            name (str): class name.
-            bases (tuple): base classes to inherit from.
-            dct (dict): class attributes.
+            item (str):
+                the name of the setting variable (not the setting's name).
+
+        Returns:
+            ``Setting``: the setting object.
+
+        Raises:
+            AttributeError if the setting does not exist.
         """
-        super(_Metaclass, cls).__init__(name, bases, dct)
+        if item in cls._meta.settings.keys():
+            return cls._meta.settings[item]
+        raise AttributeError("'%s' class has no attribute '%s'" % (
+            cls.__name__, item))
 
 
 class AppSettings(six.with_metaclass(_Metaclass)):
-    """Base class for application settings."""
+    """
+    Base class for application settings.
+
+    Only use this class as a parent class for inheritance. If you try to
+    access settings directly in ``AppSettings``, it will raise a
+    RecursionError. Some protections have been added to prevent you from
+    instantiating this very class, or to return immediately when running
+    ``AppSettings.check()``, but trying to access attributes on the class is
+    not yet prevented.
+
+    """
 
     def __init__(self):
         """
         Initialization method.
 
-        Instantiation will replace every class-declared settings with
-        the result of their ``get`` method.
+        The ``invalidate_cache`` method will be connected to the Django
+        ``setting_changed`` signal in this method, with the dispatch UID
+        being the id of this very object (``id(self)``).
         """
-        for setting in self._meta.settings:
-            setattr(self, setting, getattr(
-                self.__class__, '%s' % setting).get())
+        if self.__class__ == AppSettings:
+            raise RuntimeError('Do not use AppSettings class as itself, '
+                               'use it as a base for subclasses')
+        setting_changed.connect(self.invalidate_cache, dispatch_uid=id(self))
+        self._cache = {}
+
+    def __getattr__(self, item):
+        """
+        Return a setting value.
+
+        The caching is done here. If the setting exists, and if it's variable
+        name is in the cache dictionary, return the cached value. If there
+        is no cached value, get the setting value with ``setting.get_value()``,
+        cache it, and return it.
+
+        Args:
+            item (str):
+                the name of the setting variable (not the setting's name).
+
+        Returns:
+            object: a setting value.
+
+        Raises:
+            AttributeError if the setting does not exist.
+        """
+        if item in self.settings.keys():
+            if item in self._cache:
+                return self._cache[item]
+            value = self._cache[item] = self.settings[item].get_value()
+            return value
+        raise AttributeError("'%s' object has no attribute '%s'" % (
+            repr(self), item))
 
     @classmethod
     def check(cls):
@@ -93,12 +173,19 @@ class AppSettings(six.with_metaclass(_Metaclass)):
 
         Will raise an ``ImproperlyConfigured`` exception with explanation.
         """
+        if cls == AppSettings:
+            return None
+
         exceptions = []
-        for setting in cls._meta.settings:
+        for setting in cls.settings.values():
             try:
-                getattr(cls, '%s' % setting).check()
+                setting.check()
             # pylama:ignore=W0703
             except Exception as e:
                 exceptions.append(str(e))
         if exceptions:
             raise ImproperlyConfigured('\n'.join(exceptions))
+
+    def invalidate_cache(self, **kwargs):
+        """Invalidate cache. Run when receive ``setting_changed`` signal."""
+        self._cache = {}

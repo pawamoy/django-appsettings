@@ -44,5 +44,6 @@ jobs:
 addons:
   apt:
     packages: [libenchant-dev]
+before_install: [pip install -U setuptools]
 install: [pip install -r requirements/ci.txt]
 script: ['tox -e ${TOX_ENV}']
