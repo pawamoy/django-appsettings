@@ -2,10 +2,10 @@
 Changelog
 =========
 
-1.0.0 (2017-11-29)
+0.3.0 (2017-11-30)
 ==================
 
-First major version, going from alpha to beta status. Logic has been reworked.
+Going from alpha to beta status. Logic has been reworked.
 
 - An instance of a subclass of ``AppSettings`` will now dynamically get
   settings values from project settings, and cache them. This allows to use
