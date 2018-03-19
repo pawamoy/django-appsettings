@@ -394,7 +394,8 @@ class Setting(object):
                  prefix='',
                  call_default=True,
                  transform_default=False,
-                 checker=None):
+                 checker=None,
+                 inject_globally=True):
         """
         Initialization method.
 
@@ -416,12 +417,16 @@ class Setting(object):
         self.transform_default = transform_default
         self.required = required
         self.prefix = prefix
+        self.inject_globally = inject_globally
 
         if checker is None:
             if not hasattr(self, 'checker'):
                 self.checker = lambda n, v: None
         else:
             self.checker = checker
+        
+        if self.inject_globally:
+            self._inject_into_global_settings()
 
     def _reraise_if_required(self, err):
         if self.required:
@@ -477,6 +482,10 @@ class Setting(object):
             object: the transformed raw value.
         """
         return self.get_value()
+    
+    def _inject_into_global_settings(self):
+        if not self.raw_value:
+            setattr(settings, self.full_name, self.get_value())
 
     def get_value(self):
         """
