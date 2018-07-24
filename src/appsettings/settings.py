@@ -416,6 +416,7 @@ class Setting(object):
         self.transform_default = transform_default
         self.required = required
         self.prefix = prefix
+        self.parent_setting = None
 
         if checker is None:
             if not hasattr(self, 'checker'):
@@ -425,8 +426,12 @@ class Setting(object):
 
     def _reraise_if_required(self, err):
         if self.required:
-            raise AttributeError('%s setting is required and %s' % (
-                self.full_name, err))
+            if isinstance(err, KeyError):
+                raise KeyError('%s setting is missing required item %s' % (
+                    self.parent_setting.full_name, err))
+            else:
+                raise AttributeError('%s setting is required and %s' % (
+                    self.full_name, err))
 
     @property
     def full_name(self):
@@ -463,8 +468,12 @@ class Setting(object):
 
         Raises:
             AttributeError: if the variable is missing.
+            KeyError: if the item is missing from nested setting.
         """
-        return getattr(settings, self.full_name)
+        if self.parent_setting is not None:
+            return self.parent_setting.raw_value[self.full_name]
+        else:
+            return getattr(settings, self.full_name)
 
     @property
     def value(self):
@@ -491,7 +500,7 @@ class Setting(object):
         """
         try:
             value = self.raw_value
-        except AttributeError as err:
+        except (AttributeError, KeyError) as err:
             self._reraise_if_required(err)
             default_value = self.default_value
             if self.transform_default:
@@ -510,7 +519,7 @@ class Setting(object):
         """
         try:
             value = self.raw_value
-        except AttributeError as err:
+        except (AttributeError, KeyError) as err:
             self._reraise_if_required(err)
         else:
             self.checker(self.full_name, value)
@@ -872,3 +881,74 @@ class ObjectSetting(Setting):
         for obj in objects:
             current_object = getattr(current_object, obj)
         return current_object
+
+
+# Nested settings -------------------------------------------------------------
+class NestedSetting(DictSetting):
+    """Nested setting."""
+
+    def __init__(self, settings, name='', default=lambda: dict(),
+                 required=False, prefix='', call_default=True,
+                 transform_default=False, **checker_kwargs):
+        """
+        Initialization method.
+
+        Args:
+            settings (dict): subsettings.
+            name (str): the name of the setting.
+            default (dict): default value given to the setting.
+            required (bool): whether the setting is required or not.
+            prefix (str):
+                the setting's prefix (overrides ``AppSettings.Meta`` prefix).
+            call_default (bool): whether to call the default (if callable).
+            transform_default (bool): whether to transform the default value.
+            **checker_kwargs: keyword arguments passed to the checker.
+        """
+        super(NestedSetting, self).__init__(
+            name=name, default=default, required=required, prefix=prefix,
+            call_default=call_default, transform_default=transform_default,
+            key_type=str, **checker_kwargs)
+        for subname, subsetting in settings.items():
+            if subsetting.name == '':
+                subsetting.name = subname
+            subsetting.parent_setting = self
+        self.settings = settings
+
+    def get_value(self):
+        """
+        Return dictionary with values of subsettings.
+
+        Returns:
+            dict: values of subsettings.
+        """
+        try:
+            self.raw_value
+        except (AttributeError, KeyError) as err:
+            self._reraise_if_required(err)
+            default_value = self.default_value
+            if self.transform_default:
+                return self.transform(default_value)
+            return default_value
+        else:
+            # If setting is defined, load values of all subsettings.
+            value = {}
+            for key, subsetting in self.settings.items():
+                value[key] = subsetting.get_value()
+            return value
+
+    def check(self):
+        """
+        Run the setting checker against the setting raw value.
+
+        Raises:
+            AttributeError: if the setting is missing and required.
+            ValueError: (or other Exception) if the raw value is invalid.
+        """
+        try:
+            value = self.raw_value
+        except (AttributeError, KeyError) as err:
+            self._reraise_if_required(err)
+        else:
+            self.checker(self.full_name, value)
+            for subsetting in self.settings.values():
+                subsetting.check()
