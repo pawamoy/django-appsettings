@@ -11,7 +11,6 @@ Django AppSettings
 |codacycoverage|
 |version|
 |wheel|
-|pyup|
 |gitter|
 
 
@@ -26,10 +25,6 @@ Django AppSettings
 .. |codacycoverage| image:: https://api.codacy.com/project/badge/Coverage/20c775cc36804ddda8a70eb05b64ce92
     :target: https://www.codacy.com/app/Genida/django-appsettings/dashboard
     :alt: Codacy Code Coverage
-
-.. |pyup| image:: https://pyup.io/repos/github/Genida/django-appsettings/shield.svg
-    :target: https://pyup.io/repos/github/Genida/django-appsettings/
-    :alt: Updates
 
 .. |version| image:: https://img.shields.io/pypi/v/django-app-settings.svg?style=flat
     :target: https://pypi.org/project/django-app-settings/
