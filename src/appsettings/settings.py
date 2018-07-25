@@ -717,7 +717,7 @@ class StringSetting(Setting):
 class ListSetting(Setting):
     """List setting."""
 
-    def __init__(self, name='', default=lambda: list(), required=False,
+    def __init__(self, name='', default=list, required=False,
                  prefix='', call_default=True, transform_default=False,
                  **checker_kwargs):
         """
@@ -742,7 +742,7 @@ class ListSetting(Setting):
 class SetSetting(Setting):
     """Set setting."""
 
-    def __init__(self, name='', default=lambda: set(), required=False,
+    def __init__(self, name='', default=set, required=False,
                  prefix='', call_default=True, transform_default=False,
                  **checker_kwargs):
         """
@@ -767,7 +767,7 @@ class SetSetting(Setting):
 class TupleSetting(Setting):
     """Tuple setting."""
 
-    def __init__(self, name='', default=lambda: tuple(), required=False,
+    def __init__(self, name='', default=tuple, required=False,
                  prefix='', call_default=True, transform_default=False,
                  **checker_kwargs):
         """
@@ -793,7 +793,7 @@ class TupleSetting(Setting):
 class DictSetting(Setting):
     """Dict setting."""
 
-    def __init__(self, name='', default=lambda: dict(), required=False,
+    def __init__(self, name='', default=dict, required=False,
                  prefix='', call_default=True, transform_default=False,
                  **checker_kwargs):
         """
@@ -887,7 +887,7 @@ class ObjectSetting(Setting):
 class NestedSetting(DictSetting):
     """Nested setting."""
 
-    def __init__(self, settings, name='', default=lambda: dict(),
+    def __init__(self, settings, name='', default=dict,
                  required=False, prefix='', call_default=True,
                  transform_default=False, **checker_kwargs):
         """
