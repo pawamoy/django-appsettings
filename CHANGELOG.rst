@@ -2,6 +2,8 @@
 Changelog
 =========
 
+- Add ``NestedSetting`` for easy management of nested settings.
+
 0.3.0 (2017-11-30)
 ==================
 

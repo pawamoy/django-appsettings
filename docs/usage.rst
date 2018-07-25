@@ -17,13 +17,17 @@ To declare your application settings, create a settings class inheriting from
         required_setting = appsettings.StringSetting(required=True)
         named_setting = appsettings.IntegerSetting(name='integer_setting')
         prefixed_setting = appsettings.ListSetting(prefix='my_app_')
+        nested_setting = appsettings.NestedSetting(settings=dict(
+            foo_setting=appsettings.BooleanSetting(prefix='inner_'),
+        ))
 
         class Meta:
             setting_prefix = 'app_'
 
-In this example, we declared four different settings in our class:
-``boolean_setting``, ``required_setting``, ``named_setting``, and
-``prefixed_setting``.
+In this example, we declared six different settings in our class:
+``boolean_setting``, ``required_setting``, ``named_setting``,
+``prefixed_setting``, ``nested_setting`` and ``foo_setting``
+(which is inner setting of ``nested_setting``).
 
 The corresponding variable names in a Django project's settings file will be:
 
@@ -31,6 +35,9 @@ The corresponding variable names in a Django project's settings file will be:
 - ``required_setting``: ``APP_REQUIRED_SETTING``, because no name was given.
 - ``named_setting``: ``APP_INTEGER_SETTING``, because a name was given.
 - ``prefixed_setting``: ``MY_APP_PREFIXED_SETTING``, because we overrode the class prefix.
+- ``nested_setting``: ``APP_NESTED_SETTING``, because no name was given. The corresponding value is a dictionary.
+- ``foo_setting``: ``APP_NESTED_SETTING['INNER_FOO_SETTING']``, because ``foo_setting``
+  is inner setting of ``nested_setting`` and prefix was given.
 
 We could as well give both name and prefix to customize entirely the corresponding
 variable name in the settings file.

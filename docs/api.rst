@@ -58,6 +58,12 @@ API reference
 .. autoclass:: appsettings.ObjectSetting
     :members:
 
+``appsettings.NestedSetting`` setting
+-------------------------------------
+
+.. autoclass:: appsettings.NestedSetting
+    :members:
+
 ``appsettings.TypeChecker`` and subclasses
 ------------------------------------------
 
