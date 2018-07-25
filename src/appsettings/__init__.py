@@ -11,7 +11,7 @@ from .settings import (
     BooleanSetting, BooleanTypeChecker, DictSetting, DictTypeChecker,
     FloatSetting, FloatTypeChecker, IntegerSetting, IntegerTypeChecker,
     IterableSetting, IterableTypeChecker, ListSetting, ListTypeChecker,
-    ObjectSetting, ObjectTypeChecker, PositiveFloatSetting,
+    NestedSetting, ObjectSetting, ObjectTypeChecker, PositiveFloatSetting,
     PositiveIntegerSetting, SetSetting, Setting, SetTypeChecker, StringSetting,
     StringTypeChecker, TupleSetting, TupleTypeChecker, TypeChecker)
 
@@ -28,6 +28,7 @@ __all__ = (
     'IterableTypeChecker',
     'ListSetting',
     'ListTypeChecker',
+    'NestedSetting',
     'ObjectSetting',
     'ObjectTypeChecker',
     'PositiveFloatSetting',
