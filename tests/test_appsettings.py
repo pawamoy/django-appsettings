@@ -219,6 +219,7 @@ class SettingTestCase(SimpleTestCase):
 
     def setUp(self):
         self.message_required = '%s setting is required and'
+        self.message_missing_item = '%s setting is missing required item'
         self.message_no_attr = "has no attribute '%s'"
 
     def test_setting(self):
@@ -262,6 +263,14 @@ class SettingTestCase(SimpleTestCase):
             assert setting.value
         assert setting.default_value
 
+        setting.parent_setting = appsettings.Setting(name='parent_setting')
+        with override_settings(PARENT_SETTING={}):
+            with pytest.raises(
+                    KeyError,
+                    match=self.message_missing_item %
+                    setting.parent_setting.full_name):
+                assert setting.value
+
     def test_setting_transform(self):
         class Setting(appsettings.Setting):
             def transform(self, value):
@@ -304,6 +313,34 @@ class SettingTestCase(SimpleTestCase):
         setting = SettingNoChecker(name='check_test3')
         with override_settings(CHECK_TEST3=list(range(1, 10))):
             setting.check()
+
+        setting = appsettings.NestedSetting(
+            name='check_test3',
+            settings=dict(inner=appsettings.Setting(checker=checker))
+        )
+        setting.check()
+        with override_settings(CHECK_TEST3={'INNER': True}):
+            setting.check()
+        with override_settings(CHECK_TEST3={'INNER': 'AAA'}):
+            with pytest.raises(ValueError):
+                setting.check()
+
+    def test_setting_raw_value(self):
+        setting = appsettings.Setting(name='setting')
+        setting.check()
+        with pytest.raises(AttributeError):
+            setting.raw_value
+        with override_settings(SETTING='value'):
+            setting.check()
+            assert setting.raw_value == 'value'
+
+        setting.parent_setting = appsettings.Setting(name='parent_setting')
+        with override_settings(PARENT_SETTING={}):
+            with pytest.raises(KeyError):
+                setting.raw_value
+        with override_settings(PARENT_SETTING={'SETTING': 'value'}):
+            setting.check()
+            assert setting.raw_value == 'value'
 
     def test_boolean_setting(self):
         setting = appsettings.BooleanSetting()
@@ -371,6 +408,25 @@ class SettingTestCase(SimpleTestCase):
             assert setting.value is None
         with override_settings(OBJECT=None):
             assert setting.value is None
+
+    def test_nested_setting(self):
+        setting = appsettings.NestedSetting(settings=dict())
+        assert setting.value == {}
+        setting.transform_default = True
+        assert setting.value == {}
+
+        setting = appsettings.NestedSetting(
+            name='setting',
+            default={},
+            settings=dict(
+                bool1=appsettings.BooleanSetting(default=False),
+                bool2=appsettings.BooleanSetting(name='bool3', default=True),
+            ),
+        )
+        assert setting.value == {}
+
+        with override_settings(SETTING={'BOOL3': False}):
+            assert setting.value == {'bool1': False, 'bool2': False}
 
 
 class AppSettingsTestCase(SimpleTestCase):
