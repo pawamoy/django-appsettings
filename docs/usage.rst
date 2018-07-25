@@ -134,6 +134,55 @@ benefit from its simplicity of use and its caching feature:
     print(settings.now_function())
     print(settings.first_access.day)
 
+Nested settings
+'''''''''''''''
+
+If you want to define nested settings, such as django setting ``DATABASES``,
+you may utilize ``NestedSetting``. Those are a little bit complicated, so
+we'll explain them using simple example:
+
+.. code:: python
+
+    import appsettings
+
+
+    class MySettings(appsettings.AppSettings):
+        api = appsettings.NestedSetting(
+            prefix='our_'
+            settings=dict(
+                server=appsettings.StringSetting(prefix='my_', required=True),
+                port=appsettings.IntegerSetting(default=80, name='magic'),
+            )
+        )
+
+        class Meta:
+            setting_prefix = 'app_'
+
+Attributes of the parent does not affect the attributes of the child and vice
+versa. Child settings ignore the metaclass prefix. Lets see, what happens with
+different configurations:
+
+*  Empty configuration would be valid, because ``api`` setting is not required.
+   In this case, ``api`` default value would be used, which is empty
+   dictionary.
+
+*  Configuration ``OUR_API={}`` would be invalid, because required item
+   ``MY_SERVER`` representing subsetting ``server`` is ommited.
+
+*  Configuration ``OUR_API={'MY_SERVER': 'localhost', 'MAGIC': 42}`` would be
+   valid:
+
+   .. code:: python
+
+        settings = MySettings()
+        print(settings.api)  # {'server': 'localhost', 'port': 80}
+        print(setting.api['server'])  # 'localhost'
+        print(setting.api['port'])  # 42
+
+As you can see, value of nested setting is represented as a dictionary with
+values of all the subsettings included. If you define other items in the
+dictionary corresponding to nested setting, those other items are ignored.
+
 Testing the settings
 --------------------
 
