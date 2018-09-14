@@ -7,8 +7,11 @@ This module defines the different type checkers and settings classes.
 """
 
 import importlib
+import itertools
+import warnings
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 
 # Type checkers ===============================================================
@@ -385,7 +388,13 @@ class Setting(object):
     default value before returning it. This allows to give lambdas or callables
     as default values. The transform_default parameter tells if we should
     transform the default value as well through the transform method.
+
+    Class attributes:
+        default_validators (list of callables): Default set of validators for the setting.
     """
+
+    default_validators = ()
+    checker = None  # Disable checker by default
 
     def __init__(self,
                  name='',
@@ -394,7 +403,7 @@ class Setting(object):
                  prefix='',
                  call_default=True,
                  transform_default=False,
-                 checker=None):
+                 checker=None, validators=()):
         """
         Initialization method.
 
@@ -409,6 +418,8 @@ class Setting(object):
             checker (callable):
                 an instance of type checker or any callable object accepting
                 two arguments (name, value).
+                This argument is deprecated.
+            validators (list of callables): list of additional validators to use.
         """
         self.name = name
         self.default = default
@@ -418,11 +429,11 @@ class Setting(object):
         self.prefix = prefix
         self.parent_setting = None
 
-        if checker is None:
-            if not hasattr(self, 'checker'):
-                self.checker = lambda n, v: None
-        else:
+        if checker is not None:
+            warnings.warn("Checkers are deprecated in favor of validators.", DeprecationWarning)
             self.checker = checker
+
+        self.validators = list(itertools.chain(self.default_validators, validators))
 
     def _reraise_if_required(self, err):
         if self.required:
@@ -509,20 +520,48 @@ class Setting(object):
         else:
             return self.transform(value)
 
+    def validate(self, value):
+        """Run custom validation on the setting value.
+
+        By default, no additional validation is performed.
+
+        Raises:
+            ValidationError: if the validation fails.
+
+        """
+        pass
+
+    def run_validators(self, value):
+        """Run the validators on the setting value."""
+        errors = []
+        for validator in self.validators:
+            try:
+                validator(value)
+            except ValidationError as error:
+                errors.extend(error.messages)
+        if errors:
+            raise ValidationError(errors)
+
     def check(self):
         """
         Run the setting checker against the setting raw value.
 
         Raises:
             AttributeError: if the setting is missing and required.
-            ValueError: (or other Exception) if the raw value is invalid.
+            ValueError: if the raw value is invalid.
         """
         try:
             value = self.raw_value
         except (AttributeError, KeyError) as err:
             self._reraise_if_required(err)
         else:
-            self.checker(self.full_name, value)
+            if self.checker:
+                self.checker(self.full_name, value)
+            try:
+                self.validate(value)
+                self.run_validators(value)
+            except ValidationError as error:
+                raise ValueError("Setting {} has an invalid value: {}".format(self.full_name, error))
 
     def transform(self, value):
         """

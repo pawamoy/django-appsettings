@@ -222,40 +222,34 @@ cache each time.
         def test_string_list(self):
             assert 'bye' in self.settings.string_list
 
-Writing your own setting class
-------------------------------
+Customize setting validation
+----------------------------
 
-At some point you may want to have more complex settings. You can customize
-how the setting is checked, but also how the value is transformed before being
-returned.
+.. note:: New in version 0.4.
 
-The first way to customize the check method is to pass a callable
-in the ``checker`` parameter of the setting. This callable must accepts
-two parameters: name and value.
+You may need to customize the setting validation.
+Individual ``Settings`` use validation similar to Django form fields.
+
+The easiest way is to pass additional validators when defining a setting.
 
 .. code:: python
 
-    import re
     import appsettings
+    from django.core.validators import EmailValidator
 
-    def regex_checker(name, value):
-        re_type = type(re.compile(r'^$'))
-        if not isinstance(value, (re_type, str)):
-            # raise whatever exception
-            raise ValueError('%s must be a a string or a compiled regex '
-                             '(use re.compile)' % name)
+    setting = appsettings.StringSetting(validators=(EmailValidator(), ))
 
+A more robust method is to create a subclass and define a ``default_validators``.
 
-    setting = appsettings.Setting(checker=regex_checker)
+.. code:: python
 
-.. important::
+    import appsettings
+    from django.core.validators import EmailValidator
 
-    Note that only the ``appsettings.Setting`` class accepts the ``checker``
-    parameter! Other subclasses like ``appsettings.PositiveIntegerSetting``
-    already have a custom checker and therefore do not allow to change it.
+    class EmailSetting(StringSetting):
+        default_validators = (EmailValidator(), )
 
-The second way is to subclass ``appsettings.Setting`` and write a custom
-``checker`` method:
+The finest-grained customization can be obtained by overriding the ``validate()`` method.
 
 .. code:: python
 
@@ -264,18 +258,20 @@ The second way is to subclass ``appsettings.Setting`` and write a custom
 
 
     class RegexSetting(appsettings.Setting):
-        def checker(name, value):
+        def validate(self, value):
             re_type = type(re.compile(r'^$'))
             if not isinstance(value, (re_type, str)):
-                # raise whatever exception
-                raise ValueError('%s must be a a string or a compiled regex '
-                                 '(use re.compile)' % name)
+                # Raise ValidationError
+                raise ValidationError('%(value)s is not a string or a compiled regex (use re.compile)',
+                                      params={'value': value})
 
 
     setting = RegexSetting()
 
 Writing your own type checker
 '''''''''''''''''''''''''''''
+
+.. warning:: Checkers are deprecated, use validators instead.
 
 The third way to customize how the setting is checked is to create
 a new ``TypeChecker`` class:
@@ -325,6 +321,8 @@ a new ``TypeChecker`` class:
 
 Extending type checker and setting classes
 ''''''''''''''''''''''''''''''''''''''''''
+
+.. warning:: Checkers are deprecated, use validators instead.
 
 In the previous example, we combined our own type checker to our own setting
 class. But we can extend it furthermore by adding parameters to the type

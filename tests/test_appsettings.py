@@ -2,9 +2,10 @@
 
 """Main test script."""
 
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.test import SimpleTestCase, override_settings
 
+import mock
 import pytest
 
 import appsettings
@@ -229,6 +230,8 @@ class SettingTestCase(SimpleTestCase):
         assert setting.default_value is None
         assert setting.value is None
         assert setting.get_value() is None
+        assert setting.checker is None
+        assert setting.validators == []
         setting.check()
         with pytest.raises(
                 AttributeError,
@@ -282,6 +285,45 @@ class SettingTestCase(SimpleTestCase):
             assert setting.value == 'TRANSFORMED'
         with override_settings(TRANSFORM=1024):
             assert setting.value == 1024
+
+    def test_setting_validators(self):
+        # Test default and custom validators are correctly chained.
+        class TestSetting(appsettings.Setting):
+            default_validators = (mock.sentinel.validator, )
+
+        setting = TestSetting(name='INQUISITOR', validators=(mock.sentinel.custom_validator, ))
+        assert setting.validators == [mock.sentinel.validator, mock.sentinel.custom_validator]
+
+    def test_setting_validators_pass(self):
+        validator = mock.Mock()
+        setting = appsettings.Setting(name='INQUISITOR', validators=(validator, ))
+
+        with self.settings(INQUISITOR=mock.sentinel.lister):
+            setting.check()
+
+        assert validator.mock_calls == [mock.call(mock.sentinel.lister)]
+
+    def test_setting_validators_fail(self):
+        validator = mock.Mock(side_effect=ValidationError("You're not worthy!"))
+        setting = appsettings.Setting(name='INQUISITOR', validators=(validator, ))
+
+        with self.settings(INQUISITOR=mock.sentinel.lister):
+            with pytest.raises(ValueError, match="Setting INQUISITOR has an invalid value:.*You're not worthy!"):
+                setting.check()
+
+        assert validator.mock_calls == [mock.call(mock.sentinel.lister)]
+
+    def test_setting_custom_validate(self):
+        # Test custom validate method
+        class TestSetting(appsettings.Setting):
+            def validate(self, value):
+                raise ValidationError("You're not worthy!")
+
+        setting = TestSetting(name='INQUISITOR')
+
+        with self.settings(INQUISITOR=mock.sentinel.lister):
+            with pytest.raises(ValueError, match="Setting INQUISITOR has an invalid value:.*You're not worthy!"):
+                setting.check()
 
     def test_setting_checker(self):
         class Setting(appsettings.Setting):

@@ -125,16 +125,17 @@ You can easily create your own Setting classes for more complex settings.
 .. code:: python
 
     import re
+
     import appsettings
+    from django.core.exceptions import ValidationError
 
 
     class RegexSetting(appsettings.Setting):
-        def checker(self, name, value):
+        def validate(self, value):
             re_type = type(re.compile(r'^$'))
             if not isinstance(value, (re_type, str)):
-                # raise whatever exception
-                raise ValueError('%s must be a a string or a compiled regex '
-                                 '(use re.compile)' % name)
+                # Raise ValidationError
+                raise ValidationError('Value must be a string or a compiled regex (use re.compile)')
 
         def transform(self, value):
             # ensure it always returns a compiled regex
