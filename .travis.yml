@@ -5,12 +5,15 @@ branches:
 cache: pip
 jobs:
   include:
-  - {stage: check, python: '3.5', env: TOX_ENV=setup}
-  - {stage: check, python: '3.5', env: TOX_ENV=safety}
-  - {stage: check, python: '3.5', env: TOX_ENV=style}
-  - {stage: check, python: '3.5', env: TOX_ENV=docs}
-  - {stage: check, python: '3.5', env: TOX_ENV=spell}
-  - {stage: check, python: '3.5', env: TOX_ENV=link}
+  - {stage: quality, python: '3.5', env: TOX_ENV=check-setup}
+  - {stage: quality, python: '3.5', env: TOX_ENV=check-bandit}
+  - {stage: quality, python: '3.5', env: TOX_ENV=check-safety}
+  - {stage: quality, python: '3.6', env: TOX_ENV=check-black}
+  - {stage: quality, python: '3.5', env: TOX_ENV=check-pylint}
+  - {stage: quality, python: '3.5', env: TOX_ENV=check-isort}
+  - {stage: quality, python: '3.5', env: TOX_ENV=check-docs-spell}
+  - {stage: quality, python: '3.5', env: TOX_ENV=check-docs-link}
+  - {stage: quality, python: '3.5', env: TOX_ENV=build-docs}
   - {stage: test, after_success: 'tox -e codacy', python: '2.7', env: TOX_ENV=py27-django18}
   - {stage: test, after_success: 'tox -e codacy', python: '2.7', env: TOX_ENV=py27-django19}
   - {stage: test, after_success: 'tox -e codacy', python: '2.7', env: TOX_ENV=py27-django110}
@@ -37,9 +40,9 @@ jobs:
   - {stage: test, after_success: 'tox -e codacy', python: pypy, env: TOX_ENV=pypy-django111}
   fast_finish: true
   allow_failures:
-  - {stage: check, python: '3.5', env: TOX_ENV=style}
-  - {stage: check, python: '3.5', env: TOX_ENV=spell}
-  - {stage: check, python: '3.5', env: TOX_ENV=link}
+  - {stage: quality, python: '3.5', env: TOX_ENV=check-pylint}
+  - {stage: quality, python: '3.5', env: TOX_ENV=check-docs-spell}
+  - {stage: quality, python: '3.5', env: TOX_ENV=check-docs-link}
   - {stage: test, python: 3.7-dev}
 addons:
   apt:

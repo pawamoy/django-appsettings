@@ -1,22 +1,20 @@
 graft src
-graft tests
-graft docs
 
-include .cookiecutterrc
-include .editorconfig
+prune config
+prune docs
+prune requirements
+prune scripts
+prune tests
 
+exclude * .*
+
+include setup.py
+include setup.cfg
+include MANIFEST.in
 include AUTHORS.rst
 include CHANGELOG.rst
 include CONTRIBUTING.rst
 include LICENSE
 include README.rst
-
-include tox.ini
-
-include *.yml
-include runtests.py
-
-recursive-include requirements *.txt
-recursive-include scripts *.sh
 
 global-exclude *.py[cod] __pycache__ *.so *.dylib
