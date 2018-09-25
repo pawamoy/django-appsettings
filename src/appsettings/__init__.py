@@ -14,12 +14,17 @@ from .settings import (
     NestedSetting, ObjectSetting, ObjectTypeChecker, PositiveFloatSetting,
     PositiveIntegerSetting, SetSetting, Setting, SetTypeChecker, StringSetting,
     StringTypeChecker, TupleSetting, TupleTypeChecker, TypeChecker)
+from .validators import (
+    DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator,
+    ValuesTypeValidator)
 
 __all__ = (
     'BooleanSetting',
     'BooleanTypeChecker',
+    'DictKeysTypeValidator',
     'DictSetting',
     'DictTypeChecker',
+    'DictValuesTypeValidator',
     'FloatSetting',
     'FloatTypeChecker',
     'IntegerSetting',
@@ -40,7 +45,9 @@ __all__ = (
     'StringTypeChecker',
     'TupleSetting',
     'TupleTypeChecker',
-    'TypeChecker'
+    'TypeChecker',
+    'TypeValidator',
+    'ValuesTypeValidator',
 )
 
 

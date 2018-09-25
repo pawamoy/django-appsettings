@@ -7,8 +7,18 @@ This module defines the different type checkers and settings classes.
 """
 
 import importlib
+import itertools
+import warnings
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import (
+    MaxLengthValidator, MaxValueValidator, MinLengthValidator,
+    MinValueValidator)
+
+from .validators import (
+    DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator,
+    ValuesTypeValidator)
 
 
 # Type checkers ===============================================================
@@ -29,6 +39,7 @@ class TypeChecker(object):
         Args:
             base_type (type): the type to check against value's type.
         """
+        warnings.warn("Checkers are deprecated in favor of validators.", DeprecationWarning)
         self.base_type = base_type
 
     def __call__(self, name, value):
@@ -385,7 +396,13 @@ class Setting(object):
     default value before returning it. This allows to give lambdas or callables
     as default values. The transform_default parameter tells if we should
     transform the default value as well through the transform method.
+
+    Class attributes:
+        default_validators (list of callables): Default set of validators for the setting.
     """
+
+    default_validators = ()
+    checker = None  # Disable checker by default
 
     def __init__(self,
                  name='',
@@ -394,7 +411,7 @@ class Setting(object):
                  prefix='',
                  call_default=True,
                  transform_default=False,
-                 checker=None):
+                 checker=None, validators=()):
         """
         Initialization method.
 
@@ -409,6 +426,8 @@ class Setting(object):
             checker (callable):
                 an instance of type checker or any callable object accepting
                 two arguments (name, value).
+                This argument is deprecated.
+            validators (list of callables): list of additional validators to use.
         """
         self.name = name
         self.default = default
@@ -418,11 +437,11 @@ class Setting(object):
         self.prefix = prefix
         self.parent_setting = None
 
-        if checker is None:
-            if not hasattr(self, 'checker'):
-                self.checker = lambda n, v: None
-        else:
+        if checker is not None:
+            warnings.warn("Checkers are deprecated in favor of validators.", DeprecationWarning)
             self.checker = checker
+
+        self.validators = list(itertools.chain(self.default_validators, validators))
 
     def _reraise_if_required(self, err):
         if self.required:
@@ -509,20 +528,48 @@ class Setting(object):
         else:
             return self.transform(value)
 
+    def validate(self, value):
+        """Run custom validation on the setting value.
+
+        By default, no additional validation is performed.
+
+        Raises:
+            ValidationError: if the validation fails.
+
+        """
+        pass
+
+    def run_validators(self, value):
+        """Run the validators on the setting value."""
+        errors = []
+        for validator in self.validators:
+            try:
+                validator(value)
+            except ValidationError as error:
+                errors.extend(error.messages)
+        if errors:
+            raise ValidationError(errors)
+
     def check(self):
         """
         Run the setting checker against the setting raw value.
 
         Raises:
             AttributeError: if the setting is missing and required.
-            ValueError: (or other Exception) if the raw value is invalid.
+            ValueError: if the raw value is invalid.
         """
         try:
             value = self.raw_value
         except (AttributeError, KeyError) as err:
             self._reraise_if_required(err)
         else:
-            self.checker(self.full_name, value)
+            if self.checker:
+                self.checker(self.full_name, value)
+            try:
+                self.validate(value)
+                self.run_validators(value)
+            except ValidationError as error:
+                raise ValueError("Setting {} has an invalid value: {}".format(self.full_name, error))
 
     def transform(self, value):
         """
@@ -542,8 +589,10 @@ class Setting(object):
 class BooleanSetting(Setting):
     """Boolean setting."""
 
+    default_validators = (TypeValidator(bool), )
+
     def __init__(self, name='', default=True, required=False,
-                 prefix='', call_default=True, transform_default=False):
+                 prefix='', call_default=True, transform_default=False, validators=()):
         """
         Initialization method.
 
@@ -555,19 +604,21 @@ class BooleanSetting(Setting):
                 the setting's prefix (overrides ``AppSettings.Meta`` prefix).
             call_default (bool): whether to call the default (if callable).
             transform_default (bool): whether to transform the default value.
+            validators (list of callables): list of additional validators to use.
         """
         super(BooleanSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default,
-            checker=BooleanTypeChecker())
+            call_default=call_default, transform_default=transform_default, validators=validators)
 
 
 class IntegerSetting(Setting):
     """Integer setting."""
 
+    default_validators = (TypeValidator(int), )
+
     def __init__(self, name='', default=0, required=False,
                  prefix='', call_default=True, transform_default=False,
-                 **checker_kwargs):
+                 validators=(), minimum=None, maximum=None):
         """
         Initialization method.
 
@@ -579,20 +630,25 @@ class IntegerSetting(Setting):
                 the setting's prefix (overrides ``AppSettings.Meta`` prefix).
             call_default (bool): whether to call the default (if callable).
             transform_default (bool): whether to transform the default value.
-            **checker_kwargs: keyword arguments passed to the checker.
+            validators (list of callables): list of additional validators to use.
+            minimum (int): a minimum value (included).
+            maximum (int): a maximum value (included).
         """
         super(IntegerSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call_default=call_default, transform_default=transform_default,
-            checker=IntegerTypeChecker(**checker_kwargs))
+            validators=validators)
+        if minimum is not None:
+            self.validators.append(MinValueValidator(minimum))
+        if maximum is not None:
+            self.validators.append(MaxValueValidator(maximum))
 
 
-class PositiveIntegerSetting(Setting):
+class PositiveIntegerSetting(IntegerSetting):
     """Positive integer setting."""
 
     def __init__(self, name='', default=0, required=False,
-                 prefix='', call_default=True, transform_default=False,
-                 **checker_kwargs):
+                 prefix='', call_default=True, transform_default=False, validators=(), maximum=None):
         """
         Initialization method.
 
@@ -604,20 +660,23 @@ class PositiveIntegerSetting(Setting):
                 the setting's prefix (overrides ``AppSettings.Meta`` prefix).
             call_default (bool): whether to call the default (if callable).
             transform_default (bool): whether to transform the default value.
-            **checker_kwargs: keyword arguments passed to the checker.
+            validators (list of callables): list of additional validators to use.
+            maximum (int): a maximum value (included).
         """
         super(PositiveIntegerSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default,
-            checker=IntegerTypeChecker(minimum=0, **checker_kwargs))
+            call_default=call_default, transform_default=transform_default, validators=validators,
+            minimum=0, maximum=maximum)
 
 
-class FloatSetting(Setting):
+class FloatSetting(IntegerSetting):
     """Float setting."""
+
+    default_validators = (TypeValidator(float), )
 
     def __init__(self, name='', default=0.0, required=False,
                  prefix='', call_default=True, transform_default=False,
-                 **checker_kwargs):
+                 validators=(), minimum=None, maximum=None):
         """
         Initialization method.
 
@@ -629,20 +688,21 @@ class FloatSetting(Setting):
                 the setting's prefix (overrides ``AppSettings.Meta`` prefix).
             call_default (bool): whether to call the default (if callable).
             transform_default (bool): whether to transform the default value.
-            **checker_kwargs: keyword arguments passed to the checker.
+            validators (list of callables): list of additional validators to use.
+            minimum (int): a minimum value (included).
+            maximum (int): a maximum value (included).
         """
         super(FloatSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
             call_default=call_default, transform_default=transform_default,
-            checker=FloatTypeChecker(**checker_kwargs))
+            validators=validators, minimum=minimum, maximum=maximum)
 
 
-class PositiveFloatSetting(Setting):
+class PositiveFloatSetting(FloatSetting):
     """Positive float setting."""
 
     def __init__(self, name='', default=0.0, required=False,
-                 prefix='', call_default=True, transform_default=False,
-                 **checker_kwargs):
+                 prefix='', call_default=True, transform_default=False, validators=(), maximum=None):
         """
         Initialization method.
 
@@ -654,12 +714,13 @@ class PositiveFloatSetting(Setting):
                 the setting's prefix (overrides ``AppSettings.Meta`` prefix).
             call_default (bool): whether to call the default (if callable).
             transform_default (bool): whether to transform the default value.
-            **checker_kwargs: keyword arguments passed to the checker.
+            validators (list of callables): list of additional validators to use.
+            maximum (int): a maximum value (included).
         """
         super(PositiveFloatSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default,
-            checker=FloatTypeChecker(minimum=0.0, **checker_kwargs))
+            call_default=call_default, transform_default=transform_default, validators=validators,
+            minimum=0, maximum=maximum)
 
 
 # Iterable settings -----------------------------------------------------------
@@ -667,8 +728,8 @@ class IterableSetting(Setting):
     """Iterable setting."""
 
     def __init__(self, name='', default=None, required=False,
-                 prefix='', call_default=True, transform_default=False,
-                 **checker_kwargs):
+                 prefix='', call_default=True, transform_default=False, validators=(),
+                 item_type=None, min_length=None, max_length=None, empty=None):
         """
         Initialization method.
 
@@ -680,21 +741,35 @@ class IterableSetting(Setting):
                 the setting's prefix (overrides ``AppSettings.Meta`` prefix).
             call_default (bool): whether to call the default (if callable).
             transform_default (bool): whether to transform the default value.
-            **checker_kwargs: keyword arguments passed to the checker.
+            validators (list of callables): list of additional validators to use.
+            item_type (type): the type of the items inside the iterable.
+            min_length (int): minimum length of the iterable (included).
+            max_length (int): maximum length of the iterable (included).
+            empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
         super(IterableSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default,
-            checker=IterableTypeChecker(
-                iter_type=object, **checker_kwargs))
+            call_default=call_default, transform_default=transform_default, validators=validators)
+        if item_type is not None:
+            self.validators.append(ValuesTypeValidator(item_type))
+        if empty is not None:
+            warnings.warn("Empty argument is deprecated, use min_length instead.", DeprecationWarning)
+            if not empty:
+                min_length = 1
+        if min_length is not None:
+            self.validators.append(MinLengthValidator(min_length))
+        if max_length is not None:
+            self.validators.append(MaxLengthValidator(max_length))
 
 
 class StringSetting(Setting):
     """String setting."""
 
+    default_validators = (TypeValidator(str), )
+
     def __init__(self, name='', default='', required=False,
-                 prefix='', call_default=True, transform_default=False,
-                 **checker_kwargs):
+                 prefix='', call_default=True, transform_default=False, validators=(),
+                 min_length=None, max_length=None, empty=True):
         """
         Initialization method.
 
@@ -706,20 +781,30 @@ class StringSetting(Setting):
                 the setting's prefix (overrides ``AppSettings.Meta`` prefix).
             call_default (bool): whether to call the default (if callable).
             transform_default (bool): whether to transform the default value.
-            **checker_kwargs: keyword arguments passed to the checker.
+            validators (list of callables): list of additional validators to use.
+            min_length (int): minimum length of the iterable (included).
+            max_length (int): maximum length of the iterable (included).
+            empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
         super(StringSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default,
-            checker=StringTypeChecker(**checker_kwargs))
+            call_default=call_default, transform_default=transform_default, validators=validators)
+        if empty is not None:
+            warnings.warn("Empty argument is deprecated, use min_length instead.", DeprecationWarning)
+            if not empty:
+                min_length = 1
+        if min_length is not None:
+            self.validators.append(MinLengthValidator(min_length))
+        if max_length is not None:
+            self.validators.append(MaxLengthValidator(max_length))
 
 
-class ListSetting(Setting):
+class ListSetting(IterableSetting):
     """List setting."""
 
-    def __init__(self, name='', default=list, required=False,
-                 prefix='', call_default=True, transform_default=False,
-                 **checker_kwargs):
+    default_validators = (TypeValidator(list), )
+
+    def __init__(self, name='', default=list, *args, **kwargs):
         """
         Initialization method.
 
@@ -731,20 +816,21 @@ class ListSetting(Setting):
                 the setting's prefix (overrides ``AppSettings.Meta`` prefix).
             call_default (bool): whether to call the default (if callable).
             transform_default (bool): whether to transform the default value.
-            **checker_kwargs: keyword arguments passed to the checker.
+            validators (list of callables): list of additional validators to use.
+            item_type (type): the type of the items inside the iterable.
+            min_length (int): minimum length of the iterable (included).
+            max_length (int): maximum length of the iterable (included).
+            empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(ListSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default,
-            checker=ListTypeChecker(**checker_kwargs))
+        super(ListSetting, self).__init__(name=name, default=default, *args, **kwargs)
 
 
-class SetSetting(Setting):
+class SetSetting(IterableSetting):
     """Set setting."""
 
-    def __init__(self, name='', default=set, required=False,
-                 prefix='', call_default=True, transform_default=False,
-                 **checker_kwargs):
+    default_validators = (TypeValidator(set), )
+
+    def __init__(self, name='', default=set, *args, **kwargs):
         """
         Initialization method.
 
@@ -756,20 +842,21 @@ class SetSetting(Setting):
                 the setting's prefix (overrides ``AppSettings.Meta`` prefix).
             call_default (bool): whether to call the default (if callable).
             transform_default (bool): whether to transform the default value.
-            **checker_kwargs: keyword arguments passed to the checker.
+            validators (list of callables): list of additional validators to use.
+            item_type (type): the type of the items inside the iterable.
+            min_length (int): minimum length of the iterable (included).
+            max_length (int): maximum length of the iterable (included).
+            empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(SetSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default,
-            checker=SetTypeChecker(**checker_kwargs))
+        super(SetSetting, self).__init__(name=name, default=default, *args, **kwargs)
 
 
-class TupleSetting(Setting):
+class TupleSetting(IterableSetting):
     """Tuple setting."""
 
-    def __init__(self, name='', default=tuple, required=False,
-                 prefix='', call_default=True, transform_default=False,
-                 **checker_kwargs):
+    default_validators = (TypeValidator(tuple), )
+
+    def __init__(self, name='', default=tuple, *args, **kwargs):
         """
         Initialization method.
 
@@ -781,21 +868,24 @@ class TupleSetting(Setting):
                 the setting's prefix (overrides ``AppSettings.Meta`` prefix).
             call_default (bool): whether to call the default (if callable).
             transform_default (bool): whether to transform the default value.
-            **checker_kwargs: keyword arguments passed to the checker.
+            validators (list of callables): list of additional validators to use.
+            item_type (type): the type of the items inside the iterable.
+            min_length (int): minimum length of the iterable (included).
+            max_length (int): maximum length of the iterable (included).
+            empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(TupleSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default,
-            checker=SetTypeChecker(**checker_kwargs))
+        super(TupleSetting, self).__init__(name=name, default=default, *args, **kwargs)
 
 
 # Dict settings ---------------------------------------------------------------
 class DictSetting(Setting):
     """Dict setting."""
 
+    default_validators = (TypeValidator(dict), )
+
     def __init__(self, name='', default=dict, required=False,
-                 prefix='', call_default=True, transform_default=False,
-                 **checker_kwargs):
+                 prefix='', call_default=True, transform_default=False, validators=(),
+                 key_type=None, value_type=None, min_length=None, max_length=None, empty=None):
         """
         Initialization method.
 
@@ -807,12 +897,27 @@ class DictSetting(Setting):
                 the setting's prefix (overrides ``AppSettings.Meta`` prefix).
             call_default (bool): whether to call the default (if callable).
             transform_default (bool): whether to transform the default value.
-            **checker_kwargs: keyword arguments passed to the checker.
+            validators (list of callables): list of additional validators to use.
+            key_type: the type of the dict keys.
+            value_type (type): the type of dict values.
+            min_length (int): Noop. Deprecated.
+            max_length (int): Noop. Deprecated.
+            empty (bool): whether empty iterable is allowed. Deprecated in favor of MinLengthValidator.
         """
         super(DictSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default,
-            checker=DictTypeChecker(**checker_kwargs))
+            call_default=call_default, transform_default=transform_default, validators=validators)
+        if key_type is not None:
+            self.validators.append(DictKeysTypeValidator(key_type))
+        if value_type is not None:
+            self.validators.append(DictValuesTypeValidator(value_type))
+        if empty is not None:
+            warnings.warn("Empty argument is deprecated, use MinLengthValidator instead.", DeprecationWarning)
+            self.validators.append(MinLengthValidator(1))
+        if min_length is not None:
+            warnings.warn("Argument min_length does nothing and is deprecated.", DeprecationWarning)
+        if max_length is not None:
+            warnings.warn("Argument max_length does nothing and is deprecated.", DeprecationWarning)
 
 
 # Complex settings ------------------------------------------------------------
@@ -823,9 +928,11 @@ class ObjectSetting(Setting):
     This setting allows to return an object given its Python path (a.b.c).
     """
 
+    default_validators = (TypeValidator(str), )
+
     def __init__(self, name='', default=None, required=False,
-                 prefix='', call_default=False, transform_default=False,
-                 **checker_kwargs):
+                 prefix='', call_default=True, transform_default=False, validators=(),
+                 min_length=None, max_length=None, empty=True):
         """
         Initialization method.
 
@@ -837,12 +944,20 @@ class ObjectSetting(Setting):
                 the setting's prefix (overrides ``AppSettings.Meta`` prefix).
             call_default (bool): whether to call the default (if callable).
             transform_default (bool): whether to transform the default value.
-            **checker_kwargs: keyword arguments passed to the checker.
+            validators (list of callables): list of additional validators to use.
+            min_length (int): Noop. Deprecated.
+            max_length (int): Noop. Deprecated.
+            empty (bool): Noop. Deprecated.
         """
         super(ObjectSetting, self).__init__(
             name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default,
-            checker=ObjectTypeChecker(**checker_kwargs))
+            call_default=call_default, transform_default=transform_default, validators=validators)
+        if min_length is not None:
+            warnings.warn("Argument min_length does nothing and is deprecated.", DeprecationWarning)
+        if max_length is not None:
+            warnings.warn("Argument max_length does nothing and is deprecated.", DeprecationWarning)
+        if empty is not None:
+            warnings.warn("Argument empty does nothing and is deprecated.", DeprecationWarning)
 
     def transform(self, path):
         """
@@ -887,9 +1002,7 @@ class ObjectSetting(Setting):
 class NestedSetting(DictSetting):
     """Nested setting."""
 
-    def __init__(self, settings, name='', default=dict,
-                 required=False, prefix='', call_default=True,
-                 transform_default=False, **checker_kwargs):
+    def __init__(self, settings, *args, **kwargs):
         """
         Initialization method.
 
@@ -902,12 +1015,14 @@ class NestedSetting(DictSetting):
                 the setting's prefix (overrides ``AppSettings.Meta`` prefix).
             call_default (bool): whether to call the default (if callable).
             transform_default (bool): whether to transform the default value.
-            **checker_kwargs: keyword arguments passed to the checker.
+            validators (list of callables): list of additional validators to use.
+            key_type: the type of the dict keys.
+            value_type (type): the type of dict values.
+            min_length (int): minimum length of the iterable (included).
+            max_length (int): maximum length of the iterable (included).
+            empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(NestedSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default,
-            key_type=str, **checker_kwargs)
+        super(NestedSetting, self).__init__(*args, **kwargs)
         for subname, subsetting in settings.items():
             if subsetting.name == '':
                 subsetting.name = subname
@@ -944,11 +1059,12 @@ class NestedSetting(DictSetting):
             AttributeError: if the setting is missing and required.
             ValueError: (or other Exception) if the raw value is invalid.
         """
-        try:
-            value = self.raw_value
-        except (AttributeError, KeyError) as err:
-            self._reraise_if_required(err)
-        else:
-            self.checker(self.full_name, value)
-            for subsetting in self.settings.values():
+        super(NestedSetting, self).check()
+        errors = []
+        for subsetting in self.settings.values():
+            try:
                 subsetting.check()
+            except ValidationError as error:
+                errors.extend(error.messages)
+        if errors:
+            raise ValidationError(errors)
