@@ -8,46 +8,64 @@ from django.core.signals import setting_changed
 import six
 
 from .settings import (
-    BooleanSetting, BooleanTypeChecker, DictSetting, DictTypeChecker,
-    FloatSetting, FloatTypeChecker, IntegerSetting, IntegerTypeChecker,
-    IterableSetting, IterableTypeChecker, ListSetting, ListTypeChecker,
-    NestedSetting, ObjectSetting, ObjectTypeChecker, PositiveFloatSetting,
-    PositiveIntegerSetting, SetSetting, Setting, SetTypeChecker, StringSetting,
-    StringTypeChecker, TupleSetting, TupleTypeChecker, TypeChecker)
-from .validators import (
-    DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator,
-    ValuesTypeValidator)
+    BooleanSetting,
+    BooleanTypeChecker,
+    DictSetting,
+    DictTypeChecker,
+    FloatSetting,
+    FloatTypeChecker,
+    IntegerSetting,
+    IntegerTypeChecker,
+    IterableSetting,
+    IterableTypeChecker,
+    ListSetting,
+    ListTypeChecker,
+    NestedSetting,
+    ObjectSetting,
+    ObjectTypeChecker,
+    PositiveFloatSetting,
+    PositiveIntegerSetting,
+    SetSetting,
+    Setting,
+    SetTypeChecker,
+    StringSetting,
+    StringTypeChecker,
+    TupleSetting,
+    TupleTypeChecker,
+    TypeChecker,
+)
+from .validators import DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator, ValuesTypeValidator
 
 __all__ = (
-    'BooleanSetting',
-    'BooleanTypeChecker',
-    'DictKeysTypeValidator',
-    'DictSetting',
-    'DictTypeChecker',
-    'DictValuesTypeValidator',
-    'FloatSetting',
-    'FloatTypeChecker',
-    'IntegerSetting',
-    'IntegerTypeChecker',
-    'IterableSetting',
-    'IterableTypeChecker',
-    'ListSetting',
-    'ListTypeChecker',
-    'NestedSetting',
-    'ObjectSetting',
-    'ObjectTypeChecker',
-    'PositiveFloatSetting',
-    'PositiveIntegerSetting',
-    'SetSetting',
-    'Setting',
-    'SetTypeChecker',
-    'StringSetting',
-    'StringTypeChecker',
-    'TupleSetting',
-    'TupleTypeChecker',
-    'TypeChecker',
-    'TypeValidator',
-    'ValuesTypeValidator',
+    "BooleanSetting",
+    "BooleanTypeChecker",
+    "DictKeysTypeValidator",
+    "DictSetting",
+    "DictTypeChecker",
+    "DictValuesTypeValidator",
+    "FloatSetting",
+    "FloatTypeChecker",
+    "IntegerSetting",
+    "IntegerTypeChecker",
+    "IterableSetting",
+    "IterableTypeChecker",
+    "ListSetting",
+    "ListTypeChecker",
+    "NestedSetting",
+    "ObjectSetting",
+    "ObjectTypeChecker",
+    "PositiveFloatSetting",
+    "PositiveIntegerSetting",
+    "SetSetting",
+    "Setting",
+    "SetTypeChecker",
+    "StringSetting",
+    "StringTypeChecker",
+    "TupleSetting",
+    "TupleTypeChecker",
+    "TypeChecker",
+    "TypeValidator",
+    "ValuesTypeValidator",
 )
 
 
@@ -81,22 +99,22 @@ class _Metaclass(type):
             return super_new(mcs, cls, bases, dct)
 
         new_attr = {}
-        _meta = dct.pop('Meta', type('Meta', (), {'setting_prefix': ''}))()
+        _meta = dct.pop("Meta", type("Meta", (), {"setting_prefix": ""}))()
         _meta.settings = {}
 
         for name, setting in dct.items():
             if isinstance(setting, Setting):
                 _meta.settings[name] = setting
                 # populate name
-                if setting.name == '':
+                if setting.name == "":
                     setting.name = name
                 # populate prefix
-                if setting.prefix == '':
+                if setting.prefix == "":
                     setting.prefix = _meta.setting_prefix
             else:
                 new_attr[name] = setting
-        new_attr['_meta'] = _meta
-        new_attr['settings'] = _meta.settings
+        new_attr["_meta"] = _meta
+        new_attr["settings"] = _meta.settings
 
         return super_new(mcs, cls, bases, new_attr)
 
@@ -116,8 +134,7 @@ class _Metaclass(type):
         """
         if item in cls._meta.settings.keys():
             return cls._meta.settings[item]
-        raise AttributeError("'%s' class has no attribute '%s'" % (
-            cls.__name__, item))
+        raise AttributeError("'%s' class has no attribute '%s'" % (cls.__name__, item))
 
 
 class AppSettings(six.with_metaclass(_Metaclass)):
@@ -142,8 +159,7 @@ class AppSettings(six.with_metaclass(_Metaclass)):
         being the id of this very object (``id(self)``).
         """
         if self.__class__ == AppSettings:
-            raise RuntimeError('Do not use AppSettings class as itself, '
-                               'use it as a base for subclasses')
+            raise RuntimeError("Do not use AppSettings class as itself, use it as a base for subclasses")
         setting_changed.connect(self.invalidate_cache, dispatch_uid=id(self))
         self._cache = {}
 
@@ -171,8 +187,7 @@ class AppSettings(six.with_metaclass(_Metaclass)):
                 return self._cache[item]
             value = self._cache[item] = self.settings[item].get_value()
             return value
-        raise AttributeError("'%s' object has no attribute '%s'" % (
-            repr(self), item))
+        raise AttributeError("'%s' object has no attribute '%s'" % (repr(self), item))
 
     @classmethod
     def check(cls):
@@ -188,11 +203,10 @@ class AppSettings(six.with_metaclass(_Metaclass)):
         for setting in cls.settings.values():
             try:
                 setting.check()
-            # pylama:ignore=W0703
             except Exception as e:
                 exceptions.append(str(e))
         if exceptions:
-            raise ImproperlyConfigured('\n'.join(exceptions))
+            raise ImproperlyConfigured("\n".join(exceptions))
 
     def invalidate_cache(self, **kwargs):
         """Invalidate cache. Run when receive ``setting_changed`` signal."""

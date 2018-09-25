@@ -2,9 +2,7 @@
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 
-from appsettings import (
-    DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator,
-    ValuesTypeValidator)
+from appsettings import DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator, ValuesTypeValidator
 
 
 class TypeValidatorTestCase(SimpleTestCase):

@@ -12,13 +12,9 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import (
-    MaxLengthValidator, MaxValueValidator, MinLengthValidator,
-    MinValueValidator)
+from django.core.validators import MaxLengthValidator, MaxValueValidator, MinLengthValidator, MinValueValidator
 
-from .validators import (
-    DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator,
-    ValuesTypeValidator)
+from .validators import DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator, ValuesTypeValidator
 
 
 # Type checkers ===============================================================
@@ -54,8 +50,7 @@ class TypeChecker(object):
             ValueError: if value is not type base_type.
         """
         if not isinstance(value, self.base_type):
-            raise ValueError('%s must be %s, not %s' % (
-                name, self.base_type, value.__class__))
+            raise ValueError("%s must be %s, not %s" % (name, self.base_type, value.__class__))
 
 
 class BooleanTypeChecker(TypeChecker):
@@ -97,12 +92,10 @@ class IntegerTypeChecker(TypeChecker):
         super(IntegerTypeChecker, self).__call__(name, value)
         if isinstance(self.minimum, int):
             if value < self.minimum:
-                raise ValueError('%s must be greater or equal %s' % (
-                    name, self.minimum))
+                raise ValueError("%s must be greater or equal %s" % (name, self.minimum))
         if isinstance(self.maximum, int):
             if value > self.maximum:
-                raise ValueError('%s must be less or equal %s' % (
-                    name, self.maximum))
+                raise ValueError("%s must be less or equal %s" % (name, self.maximum))
 
 
 class FloatTypeChecker(TypeChecker):
@@ -136,12 +129,10 @@ class FloatTypeChecker(TypeChecker):
         super(FloatTypeChecker, self).__call__(name, value)
         if isinstance(self.minimum, float):
             if value < self.minimum:
-                raise ValueError('%s must be greater or equal %s' % (
-                    name, self.minimum))
+                raise ValueError("%s must be greater or equal %s" % (name, self.minimum))
         if isinstance(self.maximum, float):
             if value > self.maximum:
-                raise ValueError('%s must be less or equal %s' % (
-                    name, self.maximum))
+                raise ValueError("%s must be less or equal %s" % (name, self.maximum))
 
 
 # Iterable type checkers ------------------------------------------------------
@@ -154,8 +145,7 @@ class IterableTypeChecker(TypeChecker):
     allowed emptiness.
     """
 
-    def __init__(self, iter_type, item_type=None, min_length=None,
-                 max_length=None, empty=True):
+    def __init__(self, iter_type, item_type=None, min_length=None, max_length=None, empty=True):
         """
         Initialization method.
 
@@ -190,18 +180,15 @@ class IterableTypeChecker(TypeChecker):
         super(IterableTypeChecker, self).__call__(name, value)
         if isinstance(self.item_type, type):
             if not all(isinstance(o, self.item_type) for o in value):
-                raise ValueError('All elements of %s must be %s' % (
-                    name, self.item_type))
+                raise ValueError("All elements of %s must be %s" % (name, self.item_type))
         if isinstance(self.min_length, int):
             if len(value) < self.min_length:
-                raise ValueError('%s must be longer than %s (or equal)' % (
-                    name, self.min_length))
+                raise ValueError("%s must be longer than %s (or equal)" % (name, self.min_length))
         if isinstance(self.max_length, int):
             if len(value) > self.max_length:
-                raise ValueError('%s must be shorter than %s (or equal)' % (
-                    name, self.max_length))
+                raise ValueError("%s must be shorter than %s (or equal)" % (name, self.max_length))
         if len(value) == 0 and not self.empty:
-            raise ValueError('%s must not be empty' % name)
+            raise ValueError("%s must not be empty" % name)
 
 
 class StringTypeChecker(IterableTypeChecker):
@@ -217,15 +204,14 @@ class StringTypeChecker(IterableTypeChecker):
             empty (bool): whether empty string is allowed.
         """
         super(StringTypeChecker, self).__init__(
-            iter_type=str, min_length=min_length, max_length=max_length,
-            empty=empty)
+            iter_type=str, min_length=min_length, max_length=max_length, empty=empty
+        )
 
 
 class ListTypeChecker(IterableTypeChecker):
     """List type checker."""
 
-    def __init__(self, item_type=None, min_length=None, max_length=None,
-                 empty=True):
+    def __init__(self, item_type=None, min_length=None, max_length=None, empty=True):
         """
         Initialization method.
 
@@ -236,15 +222,14 @@ class ListTypeChecker(IterableTypeChecker):
             empty (bool): whether empty list is allowed.
         """
         super(ListTypeChecker, self).__init__(
-            iter_type=list, item_type=item_type, min_length=min_length,
-            max_length=max_length, empty=empty)
+            iter_type=list, item_type=item_type, min_length=min_length, max_length=max_length, empty=empty
+        )
 
 
 class SetTypeChecker(IterableTypeChecker):
     """Set type checker."""
 
-    def __init__(self, item_type=None, min_length=None, max_length=None,
-                 empty=True):
+    def __init__(self, item_type=None, min_length=None, max_length=None, empty=True):
         """
         Initialization method.
 
@@ -255,15 +240,14 @@ class SetTypeChecker(IterableTypeChecker):
             empty (bool): whether empty set is allowed.
         """
         super(SetTypeChecker, self).__init__(
-            iter_type=set, item_type=item_type, min_length=min_length,
-            max_length=max_length, empty=empty)
+            iter_type=set, item_type=item_type, min_length=min_length, max_length=max_length, empty=empty
+        )
 
 
 class TupleTypeChecker(IterableTypeChecker):
     """Tuple type checker."""
 
-    def __init__(self, item_type=None, min_length=None, max_length=None,
-                 empty=True):
+    def __init__(self, item_type=None, min_length=None, max_length=None, empty=True):
         """
         Initialization method.
 
@@ -274,16 +258,15 @@ class TupleTypeChecker(IterableTypeChecker):
             empty (bool): whether empty tuple is allowed.
         """
         super(TupleTypeChecker, self).__init__(
-            iter_type=tuple, item_type=item_type, min_length=min_length,
-            max_length=max_length, empty=empty)
+            iter_type=tuple, item_type=item_type, min_length=min_length, max_length=max_length, empty=empty
+        )
 
 
 # Dict type checkers ----------------------------------------------------------
 class DictTypeChecker(TypeChecker):
     """Dict type checker."""
 
-    def __init__(self, key_type=None, value_type=None, min_length=None,
-                 max_length=None, empty=True):
+    def __init__(self, key_type=None, value_type=None, min_length=None, max_length=None, empty=True):
         """
         Initialization method.
 
@@ -320,22 +303,18 @@ class DictTypeChecker(TypeChecker):
         super(DictTypeChecker, self).__call__(name, value)
         if isinstance(self.key_type, type):
             if not all(isinstance(o, self.key_type) for o in value.keys()):
-                raise ValueError('All keys of %s must be %s' % (
-                    name, self.key_type))
+                raise ValueError("All keys of %s must be %s" % (name, self.key_type))
         if isinstance(self.value_type, type):
             if not all(isinstance(o, self.value_type) for o in value.values()):
-                raise ValueError('All values of %s must be %s' % (
-                    name, self.value_type))
+                raise ValueError("All values of %s must be %s" % (name, self.value_type))
         if isinstance(self.min_length, int):
             if len(value) < self.min_length:
-                raise ValueError('%s must be longer than %s (or equal)' % (
-                    name, self.min_length))
+                raise ValueError("%s must be longer than %s (or equal)" % (name, self.min_length))
         if isinstance(self.max_length, int):
             if len(value) > self.max_length:
-                raise ValueError('%s must be shorter than %s (or equal)' % (
-                    name, self.max_length))
+                raise ValueError("%s must be shorter than %s (or equal)" % (name, self.max_length))
         if len(value) == 0 and not self.empty:
-            raise ValueError('%s must not be empty' % name)
+            raise ValueError("%s must not be empty" % name)
 
 
 # Complex type checkers -------------------------------------------------------
@@ -404,14 +383,17 @@ class Setting(object):
     default_validators = ()
     checker = None  # Disable checker by default
 
-    def __init__(self,
-                 name='',
-                 default=None,
-                 required=False,
-                 prefix='',
-                 call_default=True,
-                 transform_default=False,
-                 checker=None, validators=()):
+    def __init__(
+        self,
+        name="",
+        default=None,
+        required=False,
+        prefix="",
+        call_default=True,
+        transform_default=False,
+        checker=None,
+        validators=(),
+    ):
         """
         Initialization method.
 
@@ -446,11 +428,9 @@ class Setting(object):
     def _reraise_if_required(self, err):
         if self.required:
             if isinstance(err, KeyError):
-                raise KeyError('%s setting is missing required item %s' % (
-                    self.parent_setting.full_name, err))
+                raise KeyError("%s setting is missing required item %s" % (self.parent_setting.full_name, err))
             else:
-                raise AttributeError('%s setting is required and %s' % (
-                    self.full_name, err))
+                raise AttributeError("%s setting is required and %s" % (self.full_name, err))
 
     @property
     def full_name(self):
@@ -589,10 +569,18 @@ class Setting(object):
 class BooleanSetting(Setting):
     """Boolean setting."""
 
-    default_validators = (TypeValidator(bool), )
+    default_validators = (TypeValidator(bool),)
 
-    def __init__(self, name='', default=True, required=False,
-                 prefix='', call_default=True, transform_default=False, validators=()):
+    def __init__(
+        self,
+        name="",
+        default=True,
+        required=False,
+        prefix="",
+        call_default=True,
+        transform_default=False,
+        validators=(),
+    ):
         """
         Initialization method.
 
@@ -607,18 +595,33 @@ class BooleanSetting(Setting):
             validators (list of callables): list of additional validators to use.
         """
         super(BooleanSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default, validators=validators)
+            name=name,
+            default=default,
+            required=required,
+            prefix=prefix,
+            call_default=call_default,
+            transform_default=transform_default,
+            validators=validators,
+        )
 
 
 class IntegerSetting(Setting):
     """Integer setting."""
 
-    default_validators = (TypeValidator(int), )
+    default_validators = (TypeValidator(int),)
 
-    def __init__(self, name='', default=0, required=False,
-                 prefix='', call_default=True, transform_default=False,
-                 validators=(), minimum=None, maximum=None):
+    def __init__(
+        self,
+        name="",
+        default=0,
+        required=False,
+        prefix="",
+        call_default=True,
+        transform_default=False,
+        validators=(),
+        minimum=None,
+        maximum=None,
+    ):
         """
         Initialization method.
 
@@ -635,9 +638,14 @@ class IntegerSetting(Setting):
             maximum (int): a maximum value (included).
         """
         super(IntegerSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default,
-            validators=validators)
+            name=name,
+            default=default,
+            required=required,
+            prefix=prefix,
+            call_default=call_default,
+            transform_default=transform_default,
+            validators=validators,
+        )
         if minimum is not None:
             self.validators.append(MinValueValidator(minimum))
         if maximum is not None:
@@ -647,8 +655,17 @@ class IntegerSetting(Setting):
 class PositiveIntegerSetting(IntegerSetting):
     """Positive integer setting."""
 
-    def __init__(self, name='', default=0, required=False,
-                 prefix='', call_default=True, transform_default=False, validators=(), maximum=None):
+    def __init__(
+        self,
+        name="",
+        default=0,
+        required=False,
+        prefix="",
+        call_default=True,
+        transform_default=False,
+        validators=(),
+        maximum=None,
+    ):
         """
         Initialization method.
 
@@ -664,19 +681,35 @@ class PositiveIntegerSetting(IntegerSetting):
             maximum (int): a maximum value (included).
         """
         super(PositiveIntegerSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default, validators=validators,
-            minimum=0, maximum=maximum)
+            name=name,
+            default=default,
+            required=required,
+            prefix=prefix,
+            call_default=call_default,
+            transform_default=transform_default,
+            validators=validators,
+            minimum=0,
+            maximum=maximum,
+        )
 
 
 class FloatSetting(IntegerSetting):
     """Float setting."""
 
-    default_validators = (TypeValidator(float), )
+    default_validators = (TypeValidator(float),)
 
-    def __init__(self, name='', default=0.0, required=False,
-                 prefix='', call_default=True, transform_default=False,
-                 validators=(), minimum=None, maximum=None):
+    def __init__(
+        self,
+        name="",
+        default=0.0,
+        required=False,
+        prefix="",
+        call_default=True,
+        transform_default=False,
+        validators=(),
+        minimum=None,
+        maximum=None,
+    ):
         """
         Initialization method.
 
@@ -693,16 +726,32 @@ class FloatSetting(IntegerSetting):
             maximum (int): a maximum value (included).
         """
         super(FloatSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default,
-            validators=validators, minimum=minimum, maximum=maximum)
+            name=name,
+            default=default,
+            required=required,
+            prefix=prefix,
+            call_default=call_default,
+            transform_default=transform_default,
+            validators=validators,
+            minimum=minimum,
+            maximum=maximum,
+        )
 
 
 class PositiveFloatSetting(FloatSetting):
     """Positive float setting."""
 
-    def __init__(self, name='', default=0.0, required=False,
-                 prefix='', call_default=True, transform_default=False, validators=(), maximum=None):
+    def __init__(
+        self,
+        name="",
+        default=0.0,
+        required=False,
+        prefix="",
+        call_default=True,
+        transform_default=False,
+        validators=(),
+        maximum=None,
+    ):
         """
         Initialization method.
 
@@ -718,18 +767,36 @@ class PositiveFloatSetting(FloatSetting):
             maximum (int): a maximum value (included).
         """
         super(PositiveFloatSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default, validators=validators,
-            minimum=0, maximum=maximum)
+            name=name,
+            default=default,
+            required=required,
+            prefix=prefix,
+            call_default=call_default,
+            transform_default=transform_default,
+            validators=validators,
+            minimum=0,
+            maximum=maximum,
+        )
 
 
 # Iterable settings -----------------------------------------------------------
 class IterableSetting(Setting):
     """Iterable setting."""
 
-    def __init__(self, name='', default=None, required=False,
-                 prefix='', call_default=True, transform_default=False, validators=(),
-                 item_type=None, min_length=None, max_length=None, empty=None):
+    def __init__(
+        self,
+        name="",
+        default=None,
+        required=False,
+        prefix="",
+        call_default=True,
+        transform_default=False,
+        validators=(),
+        item_type=None,
+        min_length=None,
+        max_length=None,
+        empty=None,
+    ):
         """
         Initialization method.
 
@@ -748,8 +815,14 @@ class IterableSetting(Setting):
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
         super(IterableSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default, validators=validators)
+            name=name,
+            default=default,
+            required=required,
+            prefix=prefix,
+            call_default=call_default,
+            transform_default=transform_default,
+            validators=validators,
+        )
         if item_type is not None:
             self.validators.append(ValuesTypeValidator(item_type))
         if empty is not None:
@@ -765,11 +838,21 @@ class IterableSetting(Setting):
 class StringSetting(Setting):
     """String setting."""
 
-    default_validators = (TypeValidator(str), )
+    default_validators = (TypeValidator(str),)
 
-    def __init__(self, name='', default='', required=False,
-                 prefix='', call_default=True, transform_default=False, validators=(),
-                 min_length=None, max_length=None, empty=True):
+    def __init__(
+        self,
+        name="",
+        default="",
+        required=False,
+        prefix="",
+        call_default=True,
+        transform_default=False,
+        validators=(),
+        min_length=None,
+        max_length=None,
+        empty=True,
+    ):
         """
         Initialization method.
 
@@ -787,8 +870,14 @@ class StringSetting(Setting):
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
         super(StringSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default, validators=validators)
+            name=name,
+            default=default,
+            required=required,
+            prefix=prefix,
+            call_default=call_default,
+            transform_default=transform_default,
+            validators=validators,
+        )
         if empty is not None:
             warnings.warn("Empty argument is deprecated, use min_length instead.", DeprecationWarning)
             if not empty:
@@ -802,9 +891,9 @@ class StringSetting(Setting):
 class ListSetting(IterableSetting):
     """List setting."""
 
-    default_validators = (TypeValidator(list), )
+    default_validators = (TypeValidator(list),)
 
-    def __init__(self, name='', default=list, *args, **kwargs):
+    def __init__(self, name="", default=list, *args, **kwargs):
         """
         Initialization method.
 
@@ -828,9 +917,9 @@ class ListSetting(IterableSetting):
 class SetSetting(IterableSetting):
     """Set setting."""
 
-    default_validators = (TypeValidator(set), )
+    default_validators = (TypeValidator(set),)
 
-    def __init__(self, name='', default=set, *args, **kwargs):
+    def __init__(self, name="", default=set, *args, **kwargs):
         """
         Initialization method.
 
@@ -854,9 +943,9 @@ class SetSetting(IterableSetting):
 class TupleSetting(IterableSetting):
     """Tuple setting."""
 
-    default_validators = (TypeValidator(tuple), )
+    default_validators = (TypeValidator(tuple),)
 
-    def __init__(self, name='', default=tuple, *args, **kwargs):
+    def __init__(self, name="", default=tuple, *args, **kwargs):
         """
         Initialization method.
 
@@ -881,11 +970,23 @@ class TupleSetting(IterableSetting):
 class DictSetting(Setting):
     """Dict setting."""
 
-    default_validators = (TypeValidator(dict), )
+    default_validators = (TypeValidator(dict),)
 
-    def __init__(self, name='', default=dict, required=False,
-                 prefix='', call_default=True, transform_default=False, validators=(),
-                 key_type=None, value_type=None, min_length=None, max_length=None, empty=None):
+    def __init__(
+        self,
+        name="",
+        default=dict,
+        required=False,
+        prefix="",
+        call_default=True,
+        transform_default=False,
+        validators=(),
+        key_type=None,
+        value_type=None,
+        min_length=None,
+        max_length=None,
+        empty=None,
+    ):
         """
         Initialization method.
 
@@ -905,8 +1006,14 @@ class DictSetting(Setting):
             empty (bool): whether empty iterable is allowed. Deprecated in favor of MinLengthValidator.
         """
         super(DictSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default, validators=validators)
+            name=name,
+            default=default,
+            required=required,
+            prefix=prefix,
+            call_default=call_default,
+            transform_default=transform_default,
+            validators=validators,
+        )
         if key_type is not None:
             self.validators.append(DictKeysTypeValidator(key_type))
         if value_type is not None:
@@ -928,11 +1035,21 @@ class ObjectSetting(Setting):
     This setting allows to return an object given its Python path (a.b.c).
     """
 
-    default_validators = (TypeValidator(str), )
+    default_validators = (TypeValidator(str),)
 
-    def __init__(self, name='', default=None, required=False,
-                 prefix='', call_default=True, transform_default=False, validators=(),
-                 min_length=None, max_length=None, empty=True):
+    def __init__(
+        self,
+        name="",
+        default=None,
+        required=False,
+        prefix="",
+        call_default=True,
+        transform_default=False,
+        validators=(),
+        min_length=None,
+        max_length=None,
+        empty=True,
+    ):
         """
         Initialization method.
 
@@ -950,8 +1067,14 @@ class ObjectSetting(Setting):
             empty (bool): Noop. Deprecated.
         """
         super(ObjectSetting, self).__init__(
-            name=name, default=default, required=required, prefix=prefix,
-            call_default=call_default, transform_default=transform_default, validators=validators)
+            name=name,
+            default=default,
+            required=required,
+            prefix=prefix,
+            call_default=call_default,
+            transform_default=transform_default,
+            validators=validators,
+        )
         if min_length is not None:
             warnings.warn("Argument min_length does nothing and is deprecated.", DeprecationWarning)
         if max_length is not None:
@@ -978,18 +1101,17 @@ class ObjectSetting(Setting):
         if path is None or not path:
             return None
 
-        obj_parent_modules = path.split('.')
+        obj_parent_modules = path.split(".")
         objects = [obj_parent_modules.pop(-1)]
 
         while True:
             try:
-                parent_module_path = '.'.join(obj_parent_modules)
+                parent_module_path = ".".join(obj_parent_modules)
                 parent_module = importlib.import_module(parent_module_path)
                 break
             except ImportError:
                 if len(obj_parent_modules) == 1:
-                    raise ImportError("No module named '%s'" %
-                                      obj_parent_modules[0])
+                    raise ImportError("No module named '%s'" % obj_parent_modules[0])
                 objects.insert(0, obj_parent_modules.pop(-1))
 
         current_object = parent_module
@@ -1024,7 +1146,7 @@ class NestedSetting(DictSetting):
         """
         super(NestedSetting, self).__init__(*args, **kwargs)
         for subname, subsetting in settings.items():
-            if subsetting.name == '':
+            if subsetting.name == "":
                 subsetting.name = subname
             subsetting.parent_setting = self
         self.settings = settings
