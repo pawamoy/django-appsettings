@@ -2,10 +2,9 @@
 
 """Django AppSettings package."""
 
+import six
 from django.core.exceptions import ImproperlyConfigured
 from django.core.signals import setting_changed
-
-import six
 
 from .settings import (
     BooleanSetting,

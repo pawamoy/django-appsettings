@@ -9,7 +9,7 @@ jobs:
   - {stage: quality, python: '3.5', env: TOX_ENV=check-bandit}
   - {stage: quality, python: '3.5', env: TOX_ENV=check-safety}
   - {stage: quality, python: '3.6', env: TOX_ENV=check-black}
-  - {stage: quality, python: '3.5', env: TOX_ENV=check-pylint}
+  - {stage: quality, python: '3.5', env: TOX_ENV=check-flake8}
   - {stage: quality, python: '3.5', env: TOX_ENV=check-isort}
   - {stage: quality, python: '3.5', env: TOX_ENV=check-docs-spell}
   - {stage: quality, python: '3.5', env: TOX_ENV=check-docs-link}
@@ -40,7 +40,7 @@ jobs:
   - {stage: test, after_success: 'tox -e codacy', python: pypy, env: TOX_ENV=pypy-django111}
   fast_finish: true
   allow_failures:
-  - {stage: quality, python: '3.5', env: TOX_ENV=check-pylint}
+  - {stage: quality, python: '3.5', env: TOX_ENV=check-flake8}
   - {stage: quality, python: '3.5', env: TOX_ENV=check-docs-spell}
   - {stage: quality, python: '3.5', env: TOX_ENV=check-docs-link}
   - {stage: test, python: 3.7-dev}
