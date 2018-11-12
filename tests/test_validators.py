@@ -35,19 +35,19 @@ class DictKeysTypeValidatorTestCase(SimpleTestCase):
     """Test DictKeysTypeValidator."""
 
     def test_valid(self):
-        DictKeysTypeValidator(int)({42: 'a', 1676: 'b'})
+        DictKeysTypeValidator(int)({42: "a", 1676: "b"})
 
     def test_invalid(self):
         with self.assertRaisesMessage(ValidationError, "The key None is not of type int."):
-            DictKeysTypeValidator(int)({42: 'a', None: 'b'})
+            DictKeysTypeValidator(int)({42: "a", None: "b"})
 
 
 class DictValuesTypeValidatorTestCase(SimpleTestCase):
     """Test DictValuesTypeValidator."""
 
     def test_valid(self):
-        DictValuesTypeValidator(int)({'a': 42, 'b': 1676})
+        DictValuesTypeValidator(int)({"a": 42, "b": 1676})
 
     def test_invalid(self):
         with self.assertRaisesMessage(ValidationError, "Item b's value None is not of type int."):
-            DictValuesTypeValidator(int)({'a': 42, 'b': None})
+            DictValuesTypeValidator(int)({"a": 42, "b": None})
