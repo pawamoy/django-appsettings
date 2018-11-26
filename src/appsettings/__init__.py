@@ -2,21 +2,38 @@
 
 """Django AppSettings package."""
 
+import six
 from django.core.exceptions import ImproperlyConfigured
 from django.core.signals import setting_changed
 
-import six
-
 from .settings import (
-    BooleanSetting, BooleanTypeChecker, DictSetting, DictTypeChecker,
-    FloatSetting, FloatTypeChecker, IntegerSetting, IntegerTypeChecker,
-    IterableSetting, IterableTypeChecker, ListSetting, ListTypeChecker,
-    NestedSetting, ObjectSetting, ObjectTypeChecker, PositiveFloatSetting,
-    PositiveIntegerSetting, SetSetting, Setting, SetTypeChecker, StringSetting,
-    StringTypeChecker, TupleSetting, TupleTypeChecker, TypeChecker)
-from .validators import (
-    DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator,
-    ValuesTypeValidator)
+    BooleanSetting,
+    BooleanTypeChecker,
+    DictSetting,
+    DictTypeChecker,
+    FloatSetting,
+    FloatTypeChecker,
+    IntegerSetting,
+    IntegerTypeChecker,
+    IterableSetting,
+    IterableTypeChecker,
+    ListSetting,
+    ListTypeChecker,
+    NestedSetting,
+    ObjectSetting,
+    ObjectTypeChecker,
+    PositiveFloatSetting,
+    PositiveIntegerSetting,
+    SetSetting,
+    Setting,
+    SetTypeChecker,
+    StringSetting,
+    StringTypeChecker,
+    TupleSetting,
+    TupleTypeChecker,
+    TypeChecker,
+)
+from .validators import DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator, ValuesTypeValidator
 
 __all__ = (
     'BooleanSetting',

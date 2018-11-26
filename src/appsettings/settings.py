@@ -12,13 +12,9 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import (
-    MaxLengthValidator, MaxValueValidator, MinLengthValidator,
-    MinValueValidator)
+from django.core.validators import MaxLengthValidator, MaxValueValidator, MinLengthValidator, MinValueValidator
 
-from .validators import (
-    DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator,
-    ValuesTypeValidator)
+from .validators import DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator, ValuesTypeValidator
 
 
 # Type checkers ===============================================================

@@ -2,11 +2,10 @@
 
 """Main test script."""
 
-from django.core.exceptions import ImproperlyConfigured, ValidationError
-from django.test import SimpleTestCase, override_settings
-
 import mock
 import pytest
+from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.test import SimpleTestCase, override_settings
 
 import appsettings
 
