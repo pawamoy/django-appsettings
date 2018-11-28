@@ -16,19 +16,19 @@ Django AppSettings
 
 .. |travis| image:: https://travis-ci.org/Genida/django-appsettings.svg?branch=master
     :target: https://travis-ci.org/Genida/django-appsettings/
-    :alt: Travis-CI Build Status
+    :alt: Travis Build Status
 
 .. |codacygrade| image:: https://api.codacy.com/project/badge/Grade/20c775cc36804ddda8a70eb05b64ce92
     :target: https://www.codacy.com/app/Genida/django-appsettings/dashboard
-    :alt: Codacy Code Quality Status
+    :alt: Codacy Grade
 
 .. |codacycoverage| image:: https://api.codacy.com/project/badge/Coverage/20c775cc36804ddda8a70eb05b64ce92
     :target: https://www.codacy.com/app/Genida/django-appsettings/dashboard
-    :alt: Codacy Code Coverage
+    :alt: Codacy Coverage
 
 .. |version| image:: https://img.shields.io/pypi/v/django-app-settings.svg?style=flat
     :target: https://pypi.org/project/django-app-settings/
-    :alt: PyPI Package latest release
+    :alt: PyPI latest release
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/django-app-settings.svg?style=flat
     :target: https://pypi.org/project/django-app-settings/
