@@ -3,7 +3,7 @@ Changelog
 =========
 
 0.5.0 (2018-12-03)
-===========
+==================
 
 - Deprecate setting checkers in favor of validators, similarly to Django form fields.
 
