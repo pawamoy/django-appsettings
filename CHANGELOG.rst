@@ -2,8 +2,16 @@
 Changelog
 =========
 
-- Add ``NestedSetting`` for easy management of nested settings.
+0.5.0 (2018-12-03)
+===========
+
 - Deprecate setting checkers in favor of validators, similarly to Django form fields.
+
+
+0.4.0 (2018-07-25)
+==================
+
+- Add ``NestedSetting`` for easy management of nested settings.
 
 0.3.0 (2017-11-30)
 ==================
