@@ -87,6 +87,7 @@ For merging, you should:
 
               git clone https://github.com/pyenv/pyenv.git ~/.pyenv
               export PATH="${HOME}/.pyenv/bin:${PATH}"
+              export PYENV_ROOT="${HOME}/.pyenv"
               eval "$(pyenv init -)"
 
               pyenv install 3.5.3
@@ -98,8 +99,16 @@ Tips
 
 To run a subset of tests::
 
-    tox -e envname -- py.test -k test_myfeature
+    tox -e envname -- pytest -k test_myfeature
 
-To run all the test environments in *parallel* (you need to ``pip install detox``)::
+To run the checks in parallel::
 
-    detox
+    tox check -- -p auto
+
+To run the tests in parallel::
+
+    tox test -- -p auto
+
+To run all environments in parallel::
+
+    tox -p auto
