@@ -851,7 +851,7 @@ class StringSetting(Setting):
         validators=(),
         min_length=None,
         max_length=None,
-        empty=True,
+        empty=None,
     ):
         """
         Initialization method.
@@ -1048,7 +1048,7 @@ class ObjectSetting(Setting):
         validators=(),
         min_length=None,
         max_length=None,
-        empty=True,
+        empty=None,
     ):
         """
         Initialization method.
