@@ -137,8 +137,8 @@ benefit from its simplicity of use and its caching feature:
 Nested settings
 '''''''''''''''
 
-If you want to define nested settings, such as django setting ``DATABASES``,
-you may utilize ``NestedSetting``. Those are a little bit complicated, so
+If you want to define nested dict settings, such as django setting ``DATABASES``,
+you may utilize ``NestedDictSetting``. Those are a little bit complicated, so
 we'll explain them using simple example:
 
 .. code:: python
@@ -147,7 +147,7 @@ we'll explain them using simple example:
 
 
     class MySettings(appsettings.AppSettings):
-        api = appsettings.NestedSetting(
+        api = appsettings.NestedDictSetting(
             prefix='our_'
             settings=dict(
                 server=appsettings.StringSetting(prefix='my_', required=True),
@@ -179,7 +179,7 @@ different configurations:
         print(setting.api['server'])  # 'localhost'
         print(setting.api['port'])  # 42
 
-As you can see, value of nested setting is represented as a dictionary with
+As you can see, value of nested dict setting is represented as a dictionary with
 values of all the subsettings included. If you define other items in the
 dictionary corresponding to nested setting, those other items are ignored.
 

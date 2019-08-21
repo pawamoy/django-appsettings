@@ -297,7 +297,7 @@ class SettingTestCase(SimpleTestCase):
         with override_settings(CHECK_TEST3=list(range(1, 10))):
             setting.check()
 
-        setting = appsettings.NestedSetting(
+        setting = appsettings.NestedDictSetting(
             name="check_test3", settings=dict(inner=appsettings.Setting(checker=checker))
         )
         setting.check()
@@ -406,12 +406,12 @@ class SettingTestCase(SimpleTestCase):
                 setting.check()
 
     def test_nested_setting(self):
-        setting = appsettings.NestedSetting(settings=dict())
+        setting = appsettings.NestedDictSetting(settings=dict())
         assert setting.value == {}
         setting.transform_default = True
         assert setting.value == {}
 
-        setting = appsettings.NestedSetting(
+        setting = appsettings.NestedDictSetting(
             name="setting",
             default={},
             settings=dict(

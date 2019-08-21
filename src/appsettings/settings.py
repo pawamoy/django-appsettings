@@ -1141,8 +1141,8 @@ class CallablePathSetting(ObjectSetting):
 
 
 # Nested settings -------------------------------------------------------------
-class NestedSetting(DictSetting):
-    """Nested setting."""
+class NestedDictSetting(DictSetting):
+    """Nested dict setting."""
 
     def __init__(self, settings, *args, **kwargs):
         """
@@ -1164,7 +1164,7 @@ class NestedSetting(DictSetting):
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(NestedSetting, self).__init__(*args, **kwargs)
+        super(NestedDictSetting, self).__init__(*args, **kwargs)
         for subname, subsetting in settings.items():
             if subsetting.name == "":
                 subsetting.name = subname
@@ -1201,7 +1201,7 @@ class NestedSetting(DictSetting):
             AttributeError: if the setting is missing and required.
             ValueError: (or other Exception) if the raw value is invalid.
         """
-        super(NestedSetting, self).check()
+        super(NestedDictSetting, self).check()
         errors = []
         for subsetting in self.settings.values():
             try:
@@ -1210,3 +1210,7 @@ class NestedSetting(DictSetting):
                 errors.extend(error.messages)
         if errors:
             raise ValidationError(errors)
+
+
+class NestedSetting(NestedDictSetting):
+    """Alias for NestedDictSetting."""

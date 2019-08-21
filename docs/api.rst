@@ -64,6 +64,12 @@ API reference
 .. autoclass:: appsettings.CallablePathSetting
     :members:
 
+``appsettings.NestedDictSetting`` setting
+-----------------------------------------
+
+.. autoclass:: appsettings.NestedDictSetting
+    :members:
+
 ``appsettings.NestedSetting`` setting
 -------------------------------------
 
