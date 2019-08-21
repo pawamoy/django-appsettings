@@ -9,6 +9,7 @@ from django.core.signals import setting_changed
 from .settings import (
     BooleanSetting,
     BooleanTypeChecker,
+    CallablePathSetting,
     DictSetting,
     DictTypeChecker,
     FloatSetting,
@@ -38,6 +39,7 @@ from .validators import DictKeysTypeValidator, DictValuesTypeValidator, TypeVali
 __all__ = (
     "BooleanSetting",
     "BooleanTypeChecker",
+    "CallablePathSetting",
     "DictKeysTypeValidator",
     "DictSetting",
     "DictTypeChecker",
