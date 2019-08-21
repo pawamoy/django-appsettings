@@ -58,6 +58,12 @@ API reference
 .. autoclass:: appsettings.ObjectSetting
     :members:
 
+``appsettings.CallablePathSetting`` setting
+-------------------------------------------
+
+.. autoclass:: appsettings.CallablePathSetting
+    :members:
+
 ``appsettings.NestedSetting`` setting
 -------------------------------------
 

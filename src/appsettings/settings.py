@@ -1120,6 +1120,26 @@ class ObjectSetting(Setting):
         return current_object
 
 
+# Callable path settings ------------------------------------------------------
+class CallablePathSetting(ObjectSetting):
+    """
+    Callable path setting.
+
+    This setting value should be string containing a dotted path to a callable.
+    """
+
+    def validate(self, value):
+        """
+        Check whether the value is path to a callable.
+
+        We disregard the raw value and use transformed value instead.
+        """
+        super(CallablePathSetting, self).validate(value)
+        transformed_value = self.value
+        if not callable(transformed_value):
+            raise ValidationError("Value %(value)s is not a callable.", params={"value": transformed_value})
+
+
 # Nested settings -------------------------------------------------------------
 class NestedSetting(DictSetting):
     """Nested setting."""

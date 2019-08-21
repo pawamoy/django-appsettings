@@ -160,6 +160,8 @@ class TypeCheckerTestCase(SimpleTestCase):
 
 
 class SettingTestCase(SimpleTestCase):
+    NOT_A_CALLABLE = {}
+
     @staticmethod
     def _imported_object2():
         return "nothing"
@@ -388,6 +390,20 @@ class SettingTestCase(SimpleTestCase):
             assert setting.value is None
         with override_settings(OBJECT=None):
             assert setting.value is None
+
+    def test_callable_path_setting(self):
+        setting = appsettings.CallablePathSetting(name="callable_path")
+        setting.check()
+        assert setting.value is None
+        with override_settings(CALLABLE_PATH="tests.test_appsettings.imported_object"):
+            setting.check()
+            assert setting.value is imported_object
+        with override_settings(CALLABLE_PATH="tests.test_appsettings.SettingTestCase.NOT_A_CALLABLE"):
+            with pytest.raises(ValueError):
+                setting.check()
+        with override_settings(CALLABLE_PATH=None):
+            with pytest.raises(ValueError):
+                setting.check()
 
     def test_nested_setting(self):
         setting = appsettings.NestedSetting(settings=dict())
