@@ -1214,3 +1214,54 @@ class NestedDictSetting(DictSetting):
 
 class NestedSetting(NestedDictSetting):
     """Alias for NestedDictSetting."""
+
+
+class NestedListSetting(ListSetting):
+    """Nested list setting."""
+
+    def __init__(self, inner_setting, *args, **kwargs):
+        """
+        Initialization method.
+
+        Args:
+            inner_setting (Setting): setting that should be applied to list items.
+                NestedDictSetting is not supported at the moment.
+            name (str): the name of the setting.
+            default (dict): default value given to the setting.
+            required (bool): whether the setting is required or not.
+            prefix (str):
+                the setting's prefix (overrides ``AppSettings.Meta`` prefix).
+            call_default (bool): whether to call the default (if callable).
+            transform_default (bool): whether to transform the default value.
+            validators (list of callables): list of additional validators to use.
+            key_type: the type of the dict keys.
+            value_type (type): the type of dict values.
+            min_length (int): minimum length of the iterable (included).
+            max_length (int): maximum length of the iterable (included).
+            empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
+        """
+        super(NestedListSetting, self).__init__(*args, **kwargs)
+        if not inner_setting.name:
+            inner_setting.name = self.name
+        self.inner_setting = inner_setting
+
+    def transform(self, value):
+        """Transform all list items."""
+        transformed_value = []
+        for item in value:
+            transformed_value.append(self.inner_setting.transform(item))
+        return transformed_value
+
+    def validate(self, value):
+        """Validate all list items."""
+        super(NestedListSetting, self).validate(value)
+        if self.inner_setting.checker:
+            warnings.warn("Checkers are deprecated in favor of validators.", DeprecationWarning)
+            for item in value:
+                self.inner_setting.checker(self.full_name, item)
+        try:
+            for item in value:
+                self.inner_setting.validate(item)
+                self.inner_setting.run_validators(item)
+        except ValidationError as error:
+            raise ValueError("Setting {} has an invalid value: {}".format(self.full_name, error))

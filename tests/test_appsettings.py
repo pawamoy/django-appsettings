@@ -424,6 +424,102 @@ class SettingTestCase(SimpleTestCase):
         with override_settings(SETTING={"BOOL3": False}):
             assert setting.value == {"bool1": False, "bool2": False}
 
+    def test_nested_list_setting(self):
+        setting = appsettings.NestedListSetting(
+            name="setting",
+            default=[],
+            inner_setting=appsettings.IntegerSetting(),
+        )
+        setting.check()
+        assert setting.value == []
+
+        with override_settings(SETTING=[0, 1, 2]):
+            setting.check()
+            assert setting.value == [0, 1, 2]
+        with override_settings(SETTING=[0, "1", 2]):
+            with pytest.raises(ValueError):
+                setting.check()
+
+        setting = appsettings.NestedListSetting(
+            name="setting",
+            default=[],
+            inner_setting=appsettings.ObjectSetting(),
+        )
+        setting.check()
+        assert setting.value == []
+        with override_settings(SETTING=[
+            "tests.test_appsettings.imported_object",
+            "tests.test_appsettings.SettingTestCase._imported_object2"
+        ]):
+            setting.check()
+            assert setting.value == [imported_object, self._imported_object2]
+
+    def test_nested_nested_list_setting(self):
+        setting = appsettings.NestedListSetting(
+            name="setting",
+            default=[],
+            inner_setting=appsettings.NestedListSetting(
+                name="inner",
+                default=[],
+                inner_setting=appsettings.IntegerSetting(),
+            ),
+        )
+        setting.check()
+        assert setting.value == []
+        assert setting.inner_setting.name == "inner"
+        with override_settings(SETTING=[[1, 2, 3], [4, 5]]):
+            setting.check()
+            assert setting.value == [[1, 2, 3], [4, 5]]
+        with override_settings(SETTING=[[1, 2, 3], ["4", 5]]):
+            with pytest.raises(ValueError):
+                setting.check()
+
+        setting = appsettings.NestedListSetting(
+            name="setting",
+            inner_setting=appsettings.NestedListSetting(
+                inner_setting=appsettings.NestedListSetting(
+                    inner_setting=appsettings.ObjectSetting()
+                )
+            ),
+        )
+        assert setting.inner_setting.name == "setting"
+        with override_settings(SETTING=[[
+            ["tests.test_appsettings.imported_object"],
+            ["tests.test_appsettings.SettingTestCase._imported_object2"],
+        ]]):
+            setting.check()
+            assert setting.value == [[[imported_object], [self._imported_object2]]]
+        with override_settings(SETTING=[[
+            ["tests.test_appsettings.imported_object"],
+            ["tests.test_appsettings.object_does_not_exist"],
+        ]]):
+            with pytest.raises(AttributeError):
+                assert setting.value
+
+    def test_nested_list_in_nested_dict_setting(self):
+        setting = appsettings.NestedDictSetting(
+            name="setting",
+            default={},
+            settings=dict(
+                select=appsettings.NestedListSetting(
+                    name="pick",
+                    default=[1],
+                    inner_setting=appsettings.IntegerSetting(),
+                )
+            ),
+        )
+        setting.check()
+        assert setting.value == {}
+        with override_settings(SETTING={}):
+            setting.check()
+            assert setting.value == {"select": [1]}
+        with override_settings(SETTING={"PICK": [2]}):
+            setting.check()
+            assert setting.value == {"select": [2]}
+        with override_settings(SETTING={"PICK": ["xyz"]}):
+            with pytest.raises(ValueError):
+                setting.check()
+
 
 class AppSettingsTestCase(SimpleTestCase):
     def test_instantiation(self):

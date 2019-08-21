@@ -137,6 +137,43 @@ benefit from its simplicity of use and its caching feature:
 Nested settings
 '''''''''''''''
 
+Django AppSettings provides two types of nested settings:
+``NestedListSetting`` and ``NestedDictSetting``.
+
+Nested list settings
+^^^^^^^^^^^^^^^^^^^^
+
+You can use nested list settings to generalize ordinary flat setting to a list.
+All you have to do is pass an instance of that setting as ``inner_setting`` attribute.
+You can even add custom validators and other attributes to that inner setting.
+However, ``name``, ``default``, ``call_default``, ``transform_default``, ``required``
+and ``prefix`` attributes makes no sense for the inner setting and are silently ignored.
+Let's say that we want to create setting that contains list of integers.
+We can express it thus:
+
+.. code:: python
+
+   import appsettings
+
+   class MySettings(appsettings.AppSettings):
+      int_list = appsettings.NestedListSetting(
+         inner_setting=appsettings.IntegerSetting()
+      )
+
+Of course, we could just use ``ListSetting`` with ``item_type=int``.
+However, ``NestedListSetting`` can be applied to any flat setting, e.g. ``ObjectSetting``.
+Transformation and validation of the inner setting is applied to each of the list items individually.
+
+Furthemore, you can also use ``NestedListSetting`` in another ``NestedListSetting`` to arbitrary depth.
+
+.. warning::
+
+   It is not possible to use ``NestedDictSetting`` as inner setting in ``NestedListSetting`` at the moment.
+   However, it is possible to use ``NestedListSetting`` inside ``NestedDictSetting`` without limitation.
+
+Nested dict settings
+^^^^^^^^^^^^^^^^^^^^
+
 If you want to define nested dict settings, such as django setting ``DATABASES``,
 you may utilize ``NestedDictSetting``. Those are a little bit complicated, so
 we'll explain them using simple example:
