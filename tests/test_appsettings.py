@@ -209,7 +209,7 @@ class SettingTestCase(SimpleTestCase):
             assert setting.value
         assert setting.default_value
 
-        setting.parent_setting = appsettings.Setting(name="parent_setting")
+        setting.parent_setting = appsettings.NestedDictSetting(settings={}, name="parent_setting")
         with override_settings(PARENT_SETTING={}):
             with pytest.raises(KeyError, match=self.message_missing_item % setting.parent_setting.full_name):
                 assert setting.value
@@ -316,11 +316,20 @@ class SettingTestCase(SimpleTestCase):
             setting.check()
             assert setting.raw_value == "value"
 
-        setting.parent_setting = appsettings.Setting(name="parent_setting")
+        setting.parent_setting = appsettings.NestedDictSetting(settings={}, name="parent_setting")
         with override_settings(PARENT_SETTING={}):
             with pytest.raises(KeyError):
                 setting.raw_value
         with override_settings(PARENT_SETTING={"SETTING": "value"}):
+            setting.check()
+            assert setting.raw_value == "value"
+
+        setting.parent_setting = appsettings.NestedListSetting(inner_setting=setting, name="parent_setting")
+        setting.nested_list_index = 0
+        with override_settings(PARENT_SETTING=[]):
+            with pytest.raises(IndexError):
+                setting.raw_value
+        with override_settings(PARENT_SETTING=["value"]):
             setting.check()
             assert setting.raw_value == "value"
 
@@ -431,7 +440,7 @@ class SettingTestCase(SimpleTestCase):
 
         with override_settings(SETTING=[0, 1, 2]):
             setting.check()
-            assert setting.value == [0, 1, 2]
+            assert setting.value == (0, 1, 2)
         with override_settings(SETTING=[0, "1", 2]):
             with pytest.raises(ValueError):
                 setting.check()
@@ -446,7 +455,7 @@ class SettingTestCase(SimpleTestCase):
             ]
         ):
             setting.check()
-            assert setting.value == [imported_object, self._imported_object2]
+            assert setting.value == (imported_object, self._imported_object2)
 
     def test_nested_nested_list_setting(self):
         setting = appsettings.NestedListSetting(
@@ -459,10 +468,10 @@ class SettingTestCase(SimpleTestCase):
         setting.check()
         assert setting.value == []
         assert setting.inner_setting.name == "inner"
-        with override_settings(SETTING=[[1, 2, 3], [4, 5]]):
+        with override_settings(SETTING=([1, 2, 3], [4, 5])):
             setting.check()
-            assert setting.value == [[1, 2, 3], [4, 5]]
-        with override_settings(SETTING=[[1, 2, 3], ["4", 5]]):
+            assert setting.value == ((1, 2, 3), (4, 5))
+        with override_settings(SETTING=[[1, 2, 3], ["x", 5]]):
             with pytest.raises(ValueError):
                 setting.check()
 
@@ -475,14 +484,14 @@ class SettingTestCase(SimpleTestCase):
         assert setting.inner_setting.name == "setting"
         with override_settings(
             SETTING=[
-                [
+                (
                     ["tests.test_appsettings.imported_object"],
                     ["tests.test_appsettings.SettingTestCase._imported_object2"],
-                ]
+                )
             ]
         ):
             setting.check()
-            assert setting.value == [[[imported_object], [self._imported_object2]]]
+            assert setting.value == (((imported_object,), (self._imported_object2,)),)
         with override_settings(
             SETTING=[[["tests.test_appsettings.imported_object"], ["tests.test_appsettings.object_does_not_exist"]]]
         ):
@@ -506,7 +515,7 @@ class SettingTestCase(SimpleTestCase):
             assert setting.value == {"select": [1]}
         with override_settings(SETTING={"PICK": [2]}):
             setting.check()
-            assert setting.value == {"select": [2]}
+            assert setting.value == {"select": (2,)}
         with override_settings(SETTING={"PICK": ["xyz"]}):
             with pytest.raises(ValueError):
                 setting.check()

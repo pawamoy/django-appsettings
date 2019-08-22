@@ -469,8 +469,10 @@ class Setting(object):
             AttributeError: if the variable is missing.
             KeyError: if the item is missing from nested setting.
         """
-        if self.parent_setting is not None:
+        if isinstance(self.parent_setting, NestedDictSetting):
             return self.parent_setting.raw_value[self.full_name]
+        elif isinstance(self.parent_setting, NestedListSetting):
+            return self.parent_setting.raw_value[self.nested_list_index]
         else:
             return getattr(settings, self.full_name)
 
@@ -1213,10 +1215,33 @@ class NestedDictSetting(DictSetting):
 
 
 class NestedSetting(NestedDictSetting):
-    """Alias for NestedDictSetting."""
+    """Deprecated alias for NestedDictSetting."""
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialization method.
+
+        Args:
+            settings (dict): subsettings.
+            name (str): the name of the setting.
+            default (dict): default value given to the setting.
+            required (bool): whether the setting is required or not.
+            prefix (str):
+                the setting's prefix (overrides ``AppSettings.Meta`` prefix).
+            call_default (bool): whether to call the default (if callable).
+            transform_default (bool): whether to transform the default value.
+            validators (list of callables): list of additional validators to use.
+            key_type: the type of the dict keys.
+            value_type (type): the type of dict values.
+            min_length (int): minimum length of the iterable (included).
+            max_length (int): maximum length of the iterable (included).
+            empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
+        """
+        super(NestedSetting, self).__init__(*args, **kwargs)
+        warnings.warn("Checkers are deprecated in favor of validators.", DeprecationWarning)
 
 
-class NestedListSetting(ListSetting):
+class NestedListSetting(IterableSetting):
     """Nested list setting."""
 
     def __init__(self, inner_setting, *args, **kwargs):
@@ -1243,25 +1268,33 @@ class NestedListSetting(ListSetting):
         super(NestedListSetting, self).__init__(*args, **kwargs)
         if not inner_setting.name:
             inner_setting.name = self.name
+        inner_setting.parent_setting = self
         self.inner_setting = inner_setting
 
-    def transform(self, value):
-        """Transform all list items."""
-        transformed_value = []
-        for item in value:
-            transformed_value.append(self.inner_setting.transform(item))
-        return transformed_value
-
-    def validate(self, value):
-        """Validate all list items."""
-        super(NestedListSetting, self).validate(value)
-        if self.inner_setting.checker:
-            warnings.warn("Checkers are deprecated in favor of validators.", DeprecationWarning)
-            for item in value:
-                self.inner_setting.checker(self.full_name, item)
+    def get_value(self):
         try:
-            for item in value:
-                self.inner_setting.validate(item)
-                self.inner_setting.run_validators(item)
-        except ValidationError as error:
-            raise ValueError("Setting {} has an invalid value: {}".format(self.full_name, error))
+            value = self.raw_value
+        except (AttributeError, KeyError) as err:
+            self._reraise_if_required(err)
+            default_value = self.default_value
+            if self.transform_default:
+                return self.transform(default_value)
+            return default_value
+        else:
+            return_value = []
+            for index, item in enumerate(value):
+                self.inner_setting.nested_list_index = index
+                return_value.append(self.inner_setting.get_value())
+            return tuple(return_value)
+
+    def check(self):
+        """Check the nested list setting itself and all its items."""
+        super(NestedListSetting, self).check()
+        try:
+            value = self.raw_value
+        except (AttributeError, KeyError) as err:
+            self._reraise_if_required(err)
+        else:
+            for index, item in enumerate(value):
+                self.inner_setting.nested_list_index = index
+                self.inner_setting.check()
