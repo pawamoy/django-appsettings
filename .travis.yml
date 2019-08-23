@@ -27,10 +27,10 @@ jobs:
   - {stage: test, after_success: 'tox -e codacy', python: '3.6', env: TOX_ENV=py36-django20}
   - {stage: test, after_success: 'tox -e codacy', python: '3.6', env: TOX_ENV=py36-django21}
   - {stage: test, after_success: 'tox -e codacy', python: '3.6', env: TOX_ENV=py36-django22}
-  - {stage: test, after_success: 'tox -e codacy', python: 3.7-dev, env: TOX_ENV=py37-dev-django111}
-  - {stage: test, after_success: 'tox -e codacy', python: 3.7-dev, env: TOX_ENV=py37-dev-django20}
-  - {stage: test, after_success: 'tox -e codacy', python: 3.7-dev, env: TOX_ENV=py37-dev-django21}
-  - {stage: test, after_success: 'tox -e codacy', python: 3.7-dev, env: TOX_ENV=py37-dev-django22}
+  - {stage: test, after_success: 'tox -e codacy', python: '3.7', env: TOX_ENV=py37-django111}
+  - {stage: test, after_success: 'tox -e codacy', python: '3.7', env: TOX_ENV=py37-django20}
+  - {stage: test, after_success: 'tox -e codacy', python: '3.7', env: TOX_ENV=py37-django21}
+  - {stage: test, after_success: 'tox -e codacy', python: '3.7', env: TOX_ENV=py37-django22}
   - {stage: test, after_success: 'tox -e codacy', python: pypy, env: TOX_ENV=pypy2-django111}
   - {stage: test, after_success: 'tox -e codacy', python: pypy3.5, env: TOX_ENV=pypy3-django111}
   - {stage: test, after_success: 'tox -e codacy', python: pypy3.5, env: TOX_ENV=pypy3-django20}
@@ -40,7 +40,6 @@ jobs:
   allow_failures:
   - {stage: quality, python: '3.5', env: TOX_ENV=check-docs-spell}
   - {stage: quality, python: '3.5', env: TOX_ENV=check-docs-link}
-  - {stage: test, python: 3.7-dev}
 addons:
   apt:
     packages: [libenchant-dev]
