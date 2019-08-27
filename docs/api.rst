@@ -64,10 +64,24 @@ API reference
 .. autoclass:: appsettings.CallablePathSetting
     :members:
 
+``appsettings.NestedDictSetting`` setting
+-----------------------------------------
+
+.. autoclass:: appsettings.NestedDictSetting
+    :members:
+
 ``appsettings.NestedSetting`` setting
 -------------------------------------
 
+This setting is deprecated in favor of ``appsettings.NestedDictSetting``.
+
 .. autoclass:: appsettings.NestedSetting
+    :members:
+
+``appsettings.NestedListSetting`` setting
+-----------------------------------------
+
+.. autoclass:: appsettings.NestedListSetting
     :members:
 
 ``appsettings.TypeChecker`` and subclasses

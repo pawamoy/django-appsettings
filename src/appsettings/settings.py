@@ -418,6 +418,7 @@ class Setting(object):
         self.required = required
         self.prefix = prefix
         self.parent_setting = None
+        self.nested_list_index = None
 
         if checker is not None:
             warnings.warn("Checkers are deprecated in favor of validators.", DeprecationWarning)
@@ -469,8 +470,10 @@ class Setting(object):
             AttributeError: if the variable is missing.
             KeyError: if the item is missing from nested setting.
         """
-        if self.parent_setting is not None:
+        if isinstance(self.parent_setting, NestedDictSetting):
             return self.parent_setting.raw_value[self.full_name]
+        elif isinstance(self.parent_setting, NestedListSetting):
+            return self.parent_setting.raw_value[self.nested_list_index]
         else:
             return getattr(settings, self.full_name)
 
@@ -1141,8 +1144,8 @@ class CallablePathSetting(ObjectSetting):
 
 
 # Nested settings -------------------------------------------------------------
-class NestedSetting(DictSetting):
-    """Nested setting."""
+class NestedDictSetting(DictSetting):
+    """Nested dict setting."""
 
     def __init__(self, settings, *args, **kwargs):
         """
@@ -1164,7 +1167,7 @@ class NestedSetting(DictSetting):
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(NestedSetting, self).__init__(*args, **kwargs)
+        super(NestedDictSetting, self).__init__(*args, **kwargs)
         for subname, subsetting in settings.items():
             if subsetting.name == "":
                 subsetting.name = subname
@@ -1201,7 +1204,7 @@ class NestedSetting(DictSetting):
             AttributeError: if the setting is missing and required.
             ValueError: (or other Exception) if the raw value is invalid.
         """
-        super(NestedSetting, self).check()
+        super(NestedDictSetting, self).check()
         errors = []
         for subsetting in self.settings.values():
             try:
@@ -1210,3 +1213,95 @@ class NestedSetting(DictSetting):
                 errors.extend(error.messages)
         if errors:
             raise ValidationError(errors)
+
+
+class NestedSetting(NestedDictSetting):
+    """Deprecated alias for NestedDictSetting."""
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialization method.
+
+        Args:
+            settings (dict): subsettings.
+            name (str): the name of the setting.
+            default (dict): default value given to the setting.
+            required (bool): whether the setting is required or not.
+            prefix (str):
+                the setting's prefix (overrides ``AppSettings.Meta`` prefix).
+            call_default (bool): whether to call the default (if callable).
+            transform_default (bool): whether to transform the default value.
+            validators (list of callables): list of additional validators to use.
+            key_type: the type of the dict keys.
+            value_type (type): the type of dict values.
+            min_length (int): minimum length of the iterable (included).
+            max_length (int): maximum length of the iterable (included).
+            empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
+        """
+        super(NestedSetting, self).__init__(*args, **kwargs)
+        warnings.warn("NestedSetting is deprecated in favor of NestedDictSetting.", DeprecationWarning)
+
+
+class NestedListSetting(IterableSetting):
+    """Nested list setting."""
+
+    def __init__(self, inner_setting, *args, **kwargs):
+        """
+        Initialization method.
+
+        Args:
+            inner_setting (Setting): setting that should be applied to list items.
+                NestedDictSetting is not supported at the moment.
+            name (str): the name of the setting.
+            default (dict): default value given to the setting.
+            required (bool): whether the setting is required or not.
+            prefix (str):
+                the setting's prefix (overrides ``AppSettings.Meta`` prefix).
+            call_default (bool): whether to call the default (if callable).
+            transform_default (bool): whether to transform the default value.
+            validators (list of callables): list of additional validators to use.
+            key_type: the type of the dict keys.
+            value_type (type): the type of dict values.
+            min_length (int): minimum length of the iterable (included).
+            max_length (int): maximum length of the iterable (included).
+            empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
+        """
+        super(NestedListSetting, self).__init__(*args, **kwargs)
+        if not inner_setting.name:
+            inner_setting.name = self.name
+        inner_setting.parent_setting = self
+        self.inner_setting = inner_setting
+
+    def get_value(self):
+        try:
+            value = self.raw_value
+        except (AttributeError, KeyError) as err:
+            self._reraise_if_required(err)
+            default_value = self.default_value
+            if self.transform_default:
+                return self.transform(default_value)
+            return default_value
+        else:
+            return_value = []
+            for index, item in enumerate(value):
+                self.inner_setting.nested_list_index = index
+                return_value.append(self.inner_setting.get_value())
+            return tuple(return_value)
+
+    def check(self):
+        """Check the nested list setting itself and all its items."""
+        super(NestedListSetting, self).check()
+        try:
+            value = self.raw_value
+        except (AttributeError, KeyError) as err:
+            self._reraise_if_required(err)
+        else:
+            errors = []
+            for index, item in enumerate(value):
+                try:
+                    self.inner_setting.nested_list_index = index
+                    self.inner_setting.check()
+                except ValidationError as error:
+                    errors.extend(error.messages)
+            if errors:
+                raise ValidationError(errors)
