@@ -1295,6 +1295,12 @@ class NestedListSetting(IterableSetting):
         except (AttributeError, KeyError) as err:
             self._reraise_if_required(err)
         else:
+            errors = []
             for index, item in enumerate(value):
-                self.inner_setting.nested_list_index = index
-                self.inner_setting.check()
+                try:
+                    self.inner_setting.nested_list_index = index
+                    self.inner_setting.check()
+                except ValidationError as error:
+                    errors.extend(error.messages)
+            if errors:
+                raise ValidationError(errors)
