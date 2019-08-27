@@ -73,6 +73,8 @@ API reference
 ``appsettings.NestedSetting`` setting
 -------------------------------------
 
+This setting is deprecated in favor of ``appsettings.NestedDictSetting``.
+
 .. autoclass:: appsettings.NestedSetting
     :members:
 

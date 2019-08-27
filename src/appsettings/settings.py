@@ -418,6 +418,7 @@ class Setting(object):
         self.required = required
         self.prefix = prefix
         self.parent_setting = None
+        self.nested_list_index = None
 
         if checker is not None:
             warnings.warn("Checkers are deprecated in favor of validators.", DeprecationWarning)
@@ -1238,7 +1239,7 @@ class NestedSetting(NestedDictSetting):
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
         super(NestedSetting, self).__init__(*args, **kwargs)
-        warnings.warn("Checkers are deprecated in favor of validators.", DeprecationWarning)
+        warnings.warn("NestedSetting is deprecated in favor of NestedDictSetting.", DeprecationWarning)
 
 
 class NestedListSetting(IterableSetting):
