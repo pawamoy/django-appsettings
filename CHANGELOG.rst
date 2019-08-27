@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.6.0 (2019-08-27)
+==================
+
+- Add ``CallablePathSetting`` (see issue GH-49 and PR GH-52).
+- Add ``NestedListSetting`` (see issue GH-50 and PR GH-53).
+- Rename ``NestedSetting`` to ``NestedDictSetting`` (old name is still available but deprecated).
+
 0.5.1 (2019-05-23)
 ==================
 
@@ -11,7 +18,6 @@ Changelog
 ==================
 
 - Deprecate setting checkers in favor of validators, similarly to Django form fields.
-
 
 0.4.0 (2018-07-25)
 ==================
