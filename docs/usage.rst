@@ -212,7 +212,7 @@ different configurations:
    .. code:: python
 
         settings = MySettings()
-        print(settings.api)  # {'server': 'localhost', 'port': 80}
+        print(settings.api)  # {'server': 'localhost', 'port': 42}
         print(setting.api['server'])  # 'localhost'
         print(setting.api['port'])  # 42
 
