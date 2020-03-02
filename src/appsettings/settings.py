@@ -1305,3 +1305,7 @@ class NestedListSetting(IterableSetting):
                     errors.extend(error.messages)
             if errors:
                 raise ValidationError(errors)
+
+    def transform(self, value):
+        """Transform each item in the list."""
+        return tuple(self.inner_setting.transform(item) for item in value)

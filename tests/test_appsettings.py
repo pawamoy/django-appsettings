@@ -445,9 +445,14 @@ class SettingTestCase(SimpleTestCase):
             with pytest.raises(ValueError):
                 setting.check()
 
-        setting = appsettings.NestedListSetting(name="setting", default=[], inner_setting=appsettings.ObjectSetting())
+        setting = appsettings.NestedListSetting(
+            name="setting",
+            default=["tests.test_appsettings.imported_object"],
+            transform_default=True,
+            inner_setting=appsettings.ObjectSetting()
+        )
         setting.check()
-        assert setting.value == []
+        assert setting.value == (imported_object,)
         with override_settings(
             SETTING=[
                 "tests.test_appsettings.imported_object",
