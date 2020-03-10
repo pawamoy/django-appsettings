@@ -449,7 +449,7 @@ class SettingTestCase(SimpleTestCase):
             name="setting",
             default=["tests.test_appsettings.imported_object"],
             transform_default=True,
-            inner_setting=appsettings.ObjectSetting()
+            inner_setting=appsettings.ObjectSetting(),
         )
         setting.check()
         assert setting.value == (imported_object,)
@@ -524,6 +524,92 @@ class SettingTestCase(SimpleTestCase):
         with override_settings(SETTING={"PICK": ["xyz"]}):
             with pytest.raises(ValueError):
                 setting.check()
+
+    def test_nested_dict_setting_not_required_anything(self):
+        outer_setting = appsettings.NestedDictSetting(
+            name="outer_setting", settings=dict(inner_setting=appsettings.StringSetting(default="Default"))
+        )
+
+        # Not passed anything
+        outer_setting.check()
+        assert len(outer_setting.value.items()) == 0
+        assert outer_setting.value.get("inner_setting") is None
+
+        # Pass outer setting
+        with override_settings(OUTER_SETTING={"INNER_FAKE_SETTING": "Fake setting value"}):
+            outer_setting.check()
+            assert len(outer_setting.value.items()) == 1
+            assert outer_setting.value.get("inner_setting") == "Default"
+
+        # Pass inner setting as well
+        with override_settings(OUTER_SETTING={"INNER_SETTING": "Value"}):
+            outer_setting.check()
+            assert len(outer_setting.value.items()) == 1
+            assert outer_setting.value.get("inner_setting") == "Value"
+
+    def test_nested_dict_setting_required_outer_setting(self):
+        outer_setting = appsettings.NestedDictSetting(
+            name="outer_setting",
+            required=True,
+            settings=dict(inner_setting=appsettings.StringSetting(default="Default")),
+        )
+
+        # Not passed anything
+        with pytest.raises(AttributeError):
+            outer_setting.check()
+
+        # Pass outer setting
+        with override_settings(OUTER_SETTING={"INNER_FAKE_SETTING": "Fake setting value"}):
+            outer_setting.check()
+            assert len(outer_setting.value.items()) == 1
+            assert outer_setting.value.get("inner_setting") == "Default"
+
+        # Pass inner setting as well
+        with override_settings(OUTER_SETTING={"INNER_SETTING": "Value"}):
+            outer_setting.check()
+            assert len(outer_setting.value.items()) == 1
+            assert outer_setting.value.get("inner_setting") == "Value"
+
+    def test_nested_dict_setting_required_inner_setting(self):
+        outer_setting = appsettings.NestedDictSetting(
+            name="outer_setting", settings=dict(inner_setting=appsettings.StringSetting(required=True))
+        )
+
+        # Not passed anything
+        outer_setting.check()
+        assert len(outer_setting.value.items()) == 0
+        assert outer_setting.value.get("inner_setting") is None
+
+        # Pass outer setting
+        with override_settings(OUTER_SETTING={"INNER_FAKE_SETTING": "Fake setting value"}):
+            with pytest.raises(KeyError):
+                outer_setting.check()
+
+        # Pass inner setting as well
+        with override_settings(OUTER_SETTING={"INNER_SETTING": "Value"}):
+            outer_setting.check()
+            assert len(outer_setting.value.items()) == 1
+            assert outer_setting.value.get("inner_setting") == "Value"
+
+    def test_nested_dict_setting_required_both_inner_and_outer_setting(self):
+        outer_setting = appsettings.NestedDictSetting(
+            name="outer_setting", required=True, settings=dict(inner_setting=appsettings.StringSetting(required=True))
+        )
+
+        # Not passed anything
+        with pytest.raises(AttributeError):
+            outer_setting.check()
+
+        # Pass outer setting
+        with override_settings(OUTER_SETTING={"INNER_FAKE_SETTING": "Fake setting value"}):
+            with pytest.raises(KeyError):
+                outer_setting.check()
+
+        # Pass inner setting as well
+        with override_settings(OUTER_SETTING={"INNER_SETTING": "Value"}):
+            outer_setting.check()
+            assert len(outer_setting.value.items()) == 1
+            assert outer_setting.value.get("inner_setting") == "Value"
 
 
 class AppSettingsTestCase(SimpleTestCase):
