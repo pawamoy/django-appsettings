@@ -1206,13 +1206,20 @@ class NestedDictSetting(DictSetting):
         """
         super(NestedDictSetting, self).check()
         errors = []
-        for subsetting in self.settings.values():
-            try:
-                subsetting.check()
-            except ValidationError as error:
-                errors.extend(error.messages)
-        if errors:
-            raise ValidationError(errors)
+        try:
+            raw_value = self.raw_value
+        except AttributeError:
+            # If not required and not passed
+            pass
+        else:
+            if raw_value is not None:
+                for subsetting in self.settings.values():
+                    try:
+                        subsetting.check()
+                    except ValidationError as error:
+                        errors.extend(error.messages)
+                if errors:
+                    raise ValidationError(errors)
 
 
 class NestedSetting(NestedDictSetting):
