@@ -1,4 +1,5 @@
 """Main test script."""
+import os
 from unittest import mock
 
 import pytest
@@ -25,15 +26,15 @@ class SettingTestCase(SimpleTestCase):
         self.message_no_attr = "has no attribute '%s'"
 
     def test_setting(self):
-        setting = appsettings.Setting(name='simple')
-        assert setting.name == 'simple'
-        assert setting.full_name == 'SIMPLE'
+        setting = appsettings.Setting(name="simple")
+        assert setting.name == "simple"
+        assert setting.full_name == "SIMPLE"
         assert setting.default_value is None
         assert setting.value is None
         assert setting.get_value() is None
         assert setting.validators == []
         setting.check()
-        with pytest.raises(AttributeError, match='SIMPLE'):
+        with pytest.raises(AttributeError, match="SIMPLE"):
             assert setting.raw_value
 
     def test_setting_name(self):
@@ -421,6 +422,166 @@ class SettingTestCase(SimpleTestCase):
             outer_setting.check()
             assert len(outer_setting.value.items()) == 1
             assert outer_setting.value.get("inner_setting") == "Value"
+
+    @mock.patch.dict(os.environ, {"PREFERENCE_SETTING": '"__ENV__"'})
+    def test_preference_of_environ_values(self):
+        setting = appsettings.Setting(name="preference_setting")
+        with override_settings(PREFERENCE_SETTING="__OVER__"):
+            setting.check()
+            assert setting.value == "__ENV__"
+
+    @mock.patch.dict(os.environ, {"SETTING": '{"key": ["v", "a", "l"]}'})
+    def test_json_from_environ_value(self):
+        setting = appsettings.Setting(name="setting")
+        setting.check()
+        assert setting.value == {"key": ["v", "a", "l"]}
+
+    @mock.patch.dict(os.environ, {"SETTING": "true"})
+    def test_json_boolean_setting_from_environ_true_value(self):
+        setting = appsettings.BooleanSetting(name="setting")
+        setting.check()
+        assert setting.value is True
+
+    @mock.patch.dict(os.environ, {"BOOL_LOWER": "true", "BOOL_UPPER": "TRUE", "BOOL_NUM": "1", "BOOL_WORD": "yes"})
+    def test_string_boolean_setting_from_environ_true_value(self):
+        bool_lower = appsettings.BooleanSetting(name="bool_lower")
+        bool_lower.check()
+        assert bool_lower.value is True
+
+        bool_upper = appsettings.BooleanSetting(name="bool_upper")
+        bool_upper.check()
+        assert bool_upper.value is True
+
+        bool_num = appsettings.BooleanSetting(name="bool_num")
+        bool_num.check()
+        assert bool_num.value is True
+
+        bool_word = appsettings.BooleanSetting(name="bool_word")
+        bool_word.check()
+        assert bool_word.value is True
+
+    @mock.patch.dict(os.environ, {"BOOL_LOWER": "false", "BOOL_UPPER": "FALSE", "BOOL_NUM": "0", "BOOL_WORD": "no"})
+    def test_string_boolean_setting_from_environ_false_value(self):
+        bool_lower = appsettings.BooleanSetting(name="bool_lower")
+        bool_lower.check()
+        assert bool_lower.value is False
+
+        bool_upper = appsettings.BooleanSetting(name="bool_upper")
+        bool_upper.check()
+        assert bool_upper.value is False
+
+        bool_num = appsettings.BooleanSetting(name="bool_num")
+        bool_num.check()
+        assert bool_num.value is False
+
+        bool_word = appsettings.BooleanSetting(name="bool_word")
+        bool_word.check()
+        assert bool_word.value is False
+
+    @mock.patch.dict(os.environ, {"BOOL_SETTING": "invalid"})
+    def test_string_boolean_setting_from_environ_invalid_value(self):
+        bool_setting = appsettings.BooleanSetting(name="bool_setting")
+        with pytest.raises(ValueError, match="Invalid boolean setting BOOL_SETTING"):
+            bool_setting.check()
+
+    @mock.patch.dict(os.environ, {"SETTING": "123"})
+    def test_integer_setting_from_environ_value(self):
+        setting = appsettings.IntegerSetting(name="setting")
+        setting.check()
+        assert setting.value == 123
+        assert type(setting.value) is int
+
+    @mock.patch.dict(os.environ, {"SETTING": "123.456"})
+    def test_float_setting_from_environ_value(self):
+        setting = appsettings.FloatSetting(name="setting")
+        setting.check()
+        assert setting.value == 123.456
+        assert type(setting.value) is float
+
+    @mock.patch.dict(os.environ, {"SETTING": "[1, 2, 3]"})
+    def test_iterable_setting_from_environ_json_value(self):
+        setting = appsettings.IterableSetting(name="setting")
+        setting.check()
+        assert setting.value == [1, 2, 3]
+
+    @mock.patch.dict(os.environ, {"SETTING": "1:2:3"})
+    def test_iterable_setting_from_environ_delimiter_value(self):
+        setting = appsettings.IterableSetting(name="setting")
+        setting.check()
+        assert setting.value == ["1", "2", "3"]
+
+    @mock.patch.dict(os.environ, {"SETTING": "1-2-3"})
+    def test_iterable_setting_from_environ_delimiter_value_with_item_type(self):
+        setting = appsettings.IterableSetting(name="setting", item_type=int, delimiter="-")
+        setting.check()
+        assert setting.value == [1, 2, 3]
+
+    @mock.patch.dict(os.environ, {"SETTING": '"json-string"'})
+    def test_string_setting_from_environ_json_value(self):
+        setting = appsettings.StringSetting(name="setting")
+        setting.check()
+        assert setting.value == "json-string"
+
+    @mock.patch.dict(os.environ, {"SETTING": "pure-string"})
+    def test_string_setting_from_environ_pure_value(self):
+        setting = appsettings.StringSetting(name="setting")
+        setting.check()
+        assert setting.value == "pure-string"
+
+    @mock.patch.dict(os.environ, {"SETTING": "a:b:b:b:c"})
+    def test_set_setting_from_environ_value(self):
+        setting = appsettings.SetSetting(name="setting")
+        setting.check()
+        assert setting.value == {"a", "b", "c"}
+
+    @mock.patch.dict(os.environ, {"SETTING": "a:b:c"})
+    def test_tuple_setting_from_environ_value(self):
+        setting = appsettings.TupleSetting(name="setting")
+        setting.check()
+        assert setting.value == ("a", "b", "c")
+
+    @mock.patch.dict(os.environ, {"SETTING": '{"a": "A", "b": "B"}'})
+    def test_dict_setting_from_environ_json_value(self):
+        setting = appsettings.DictSetting(name="setting")
+        setting.check()
+        assert setting.value == {"a": "A", "b": "B"}
+
+    @mock.patch.dict(os.environ, {"SETTING": "a=A b=B"})
+    def test_dict_setting_from_environ_delimiter_value(self):
+        setting = appsettings.DictSetting(name="setting")
+        setting.check()
+        assert setting.value == {"a": "A", "b": "B"}
+
+    @mock.patch.dict(os.environ, {"SETTING": "a:1--b:2"})
+    def test_dict_setting_from_environ_delimiter_value_with_types(self):
+        setting = appsettings.DictSetting(
+            name="setting", outer_delimiter="--", inner_delimiter=":", key_type=str, value_type=int
+        )
+        setting.check()
+        assert setting.value == {"a": 1, "b": 2}
+
+    @mock.patch.dict(os.environ, {"SETTING": "tests.test_appsettings.imported_object"})
+    def test_object_setting_from_environ_value(self):
+        setting = appsettings.ObjectSetting(name="setting")
+        setting.check()
+        assert setting.value is imported_object
+
+    @mock.patch.dict(os.environ, {"SETTING": '{"A": "A", "B": "B"}'})
+    def test_nested_dict_setting_from_environ_value(self):
+        setting = appsettings.NestedDictSetting(
+            settings=dict(a=appsettings.Setting(), b=appsettings.Setting(),), name="setting"
+        )
+        setting.check()
+        assert setting.value == {"a": "A", "b": "B"}
+
+    @mock.patch.dict(os.environ, {"SETTING": '{"A": "A", "B": "B"}', "A": "Fake A", "B": "Fake B"})
+    def test_parent_setting_precedence_over_environ_value(self):
+        setting = appsettings.NestedDictSetting(
+            settings=dict(a=appsettings.StringSetting(), b=appsettings.StringSetting(),), name="setting"
+        )
+        setting.check()
+        assert setting.value["a"] == "A"
+        assert setting.value["b"] == "B"
 
 
 class AppSettingsTestCase(SimpleTestCase):

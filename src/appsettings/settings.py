@@ -6,6 +6,8 @@ This module defines the settings classes.
 
 import importlib
 import itertools
+import json
+import os
 import warnings
 
 from django.conf import settings
@@ -24,14 +26,19 @@ class Setting(object):
     the variable is missing and the setting is not required. If the setting
     is missing and required, trying to access it will raise an AttributeError.
 
-    When accessing a setting's value, the value is first fetched from the
-    project settings, then passed to a transform function that will return it
-    modified (or not). By default, no transformation is applied.
+    When accessing a setting's value, the value is first fetched from environment
+    or the project settings, then passed to a transform function that will return
+    it modified (or not). By default, no transformation is applied.
 
     The call_default parameter tells if we should try to call the given
     default value before returning it. This allows to give lambdas or callables
     as default values. The transform_default parameter tells if we should
     transform the default value as well through the transform method.
+
+    If the setting value is taken from environment, decode_environ method is
+    called. By default it just decodes string as JSON and throws JSONDecodeError
+    if the value is not a valid JSON. Some subclasses override and extend this
+    method to be able to handle even other common values.
 
     Class attributes:
         default_validators (list of callables): Default set of validators for the setting.
@@ -107,10 +114,10 @@ class Setting(object):
     @property
     def raw_value(self):
         """
-        Property to return the variable defined in ``django.conf.settings``.
+        Property to return the variable defined in ``os.environ`` or in``django.conf.settings``.
 
         Returns:
-            object: the variable defined in ``django.conf.settings``.
+            object: the variable defined in ``os.environ`` or in ``django.conf.settings``.
 
         Raises:
             AttributeError: if the variable is missing.
@@ -120,6 +127,8 @@ class Setting(object):
             return self.parent_setting.raw_value[self.full_name]
         elif isinstance(self.parent_setting, NestedListSetting):
             return self.parent_setting.raw_value[self.nested_list_index]
+        elif self.full_name in os.environ:
+            return self.decode_environ(os.environ[self.full_name])
         else:
             return getattr(settings, self.full_name)
 
@@ -212,6 +221,20 @@ class Setting(object):
         """
         return value
 
+    def decode_environ(self, value):
+        """
+        Return a decoded value.
+
+        By default, loads a JSON.
+
+        Args:
+            value (string):
+
+        Returns:
+            Any: the decoded value
+        """
+        return json.loads(value)
+
 
 class BooleanSetting(Setting):
     """Boolean setting."""
@@ -250,6 +273,26 @@ class BooleanSetting(Setting):
             transform_default=transform_default,
             validators=validators,
         )
+
+    def decode_environ(self, value):
+        """
+        Return a decoded value.
+
+        Try to load a valid JSON. If JSONDecodeError is raised, chcecks for other common values (True, False, yes, no,
+        0, 1).
+
+        Args:
+            value (string):
+
+        Returns:
+            bool:
+        """
+        if value.lower() in ("true", "yes", "1"):
+            return True
+        elif value.lower() in ("false", "no", "0"):
+            return False
+        else:
+            raise ValueError("Invalid boolean setting %s in environ (%s)" % (self.full_name, value))
 
 
 class IntegerSetting(Setting):
@@ -440,6 +483,7 @@ class IterableSetting(Setting):
         transform_default=False,
         validators=(),
         item_type=None,
+        delimiter=":",
         min_length=None,
         max_length=None,
         empty=None,
@@ -457,6 +501,7 @@ class IterableSetting(Setting):
             transform_default (bool): whether to transform the default value.
             validators (list of callables): list of additional validators to use.
             item_type (type): the type of the items inside the iterable.
+            delimiter (str): value used to split a string into separated parts
             min_length (int): minimum length of the iterable (included).
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
@@ -470,6 +515,8 @@ class IterableSetting(Setting):
             transform_default=transform_default,
             validators=validators,
         )
+        self.item_type = item_type
+        self.delimiter = delimiter
         if item_type is not None:
             self.validators.append(ValuesTypeValidator(item_type))
         if empty is not None:
@@ -480,6 +527,26 @@ class IterableSetting(Setting):
             self.validators.append(MinLengthValidator(min_length))
         if max_length is not None:
             self.validators.append(MaxLengthValidator(max_length))
+
+    def decode_environ(self, value):
+        """
+        Decode JSON value or split value by a delimiter to a list, if JSONDecodeError is raised.
+
+        Default delimiter is a colon, can be changed via attribute ``delimiter``.
+
+        Args:
+            value (str):
+
+        Returns:
+            Iterable:
+        """
+        try:
+            value = super(IterableSetting, self).decode_environ(value)
+        except json.decoder.JSONDecodeError:
+            split_value = value.split(self.delimiter)
+            item_convert_func = self.item_type or (lambda v: v)
+            value = [item_convert_func(v) for v in split_value]
+        return value
 
 
 class StringSetting(Setting):
@@ -534,6 +601,24 @@ class StringSetting(Setting):
         if max_length is not None:
             self.validators.append(MaxLengthValidator(max_length))
 
+    def decode_environ(self, value):
+        """
+        Return a decoded value.
+
+        Try to load JSON or return pure string, if JSONDecodeError is raised.
+
+        Args:
+            (string):
+
+        Returns:
+            string:
+        """
+        try:
+            value = super(StringSetting, self).decode_environ(value)
+        except json.decoder.JSONDecodeError:
+            value = str(value)
+        return value
+
 
 class ListSetting(IterableSetting):
     """List setting."""
@@ -559,6 +644,20 @@ class ListSetting(IterableSetting):
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
         super(ListSetting, self).__init__(name=name, default=default, *args, **kwargs)
+
+    def decode_environ(self, value):
+        """
+        Decode JSON value or split value by a delimiter to a list, if JSONDecodeError is raised.
+
+        Default delimiter is a colon, can be changed via attribute ``delimiter``.
+
+        Args:
+            value (str):
+
+        Returns:
+            list:
+        """
+        return list(super(ListSetting, self).decode_environ(value))
 
 
 class SetSetting(IterableSetting):
@@ -586,6 +685,20 @@ class SetSetting(IterableSetting):
         """
         super(SetSetting, self).__init__(name=name, default=default, *args, **kwargs)
 
+    def decode_environ(self, value):
+        """
+        Decode JSON value or split value by a delimiter to a set, if JSONDecodeError is raised.
+
+        Default delimiter is a colon, can be changed via attribute ``delimiter``.
+
+        Args:
+            value (str):
+
+        Returns:
+            set:
+        """
+        return set(super(SetSetting, self).decode_environ(value))
+
 
 class TupleSetting(IterableSetting):
     """Tuple setting."""
@@ -612,6 +725,20 @@ class TupleSetting(IterableSetting):
         """
         super(TupleSetting, self).__init__(name=name, default=default, *args, **kwargs)
 
+    def decode_environ(self, value):
+        """
+        Decode JSON value or split value by a delimiter to a tuple, if JSONDecodeError is raised.
+
+        Default delimiter is a colon, can be changed via attribute ``delimiter``.
+
+        Args:
+            value (str):
+
+        Returns:
+            tuple:
+        """
+        return tuple(super(TupleSetting, self).decode_environ(value))
+
 
 # Dict settings ---------------------------------------------------------------
 class DictSetting(Setting):
@@ -630,6 +757,8 @@ class DictSetting(Setting):
         validators=(),
         key_type=None,
         value_type=None,
+        outer_delimiter=None,
+        inner_delimiter="=",
         min_length=None,
         max_length=None,
         empty=None,
@@ -648,6 +777,8 @@ class DictSetting(Setting):
             validators (list of callables): list of additional validators to use.
             key_type: the type of the dict keys.
             value_type (type): the type of dict values.
+            outer_delimiter (str): value used to split environ string into separated parts
+            inner_delimiter (str): value used to split environ string parts
             min_length (int): Noop. Deprecated.
             max_length (int): Noop. Deprecated.
             empty (bool): whether empty iterable is allowed. Deprecated in favor of MinLengthValidator.
@@ -661,6 +792,10 @@ class DictSetting(Setting):
             transform_default=transform_default,
             validators=validators,
         )
+        self.key_type = key_type
+        self.value_type = value_type
+        self.outer_delimiter = outer_delimiter
+        self.inner_delimiter = inner_delimiter
         if key_type is not None:
             self.validators.append(DictKeysTypeValidator(key_type))
         if value_type is not None:
@@ -672,6 +807,33 @@ class DictSetting(Setting):
             warnings.warn("Argument min_length does nothing and is deprecated.", DeprecationWarning)
         if max_length is not None:
             warnings.warn("Argument max_length does nothing and is deprecated.", DeprecationWarning)
+
+    def decode_environ(self, value):
+        """
+        Decode JSON value or split value by delimiters to a dict, if JSONDecodeError is raised.
+
+        Default delimiter to distinguish single items is a whitespace sequence, items are then split by equal sign by
+        default. Both delimiters can be changed via instance attributes ``inner_delimiter`` and ``outer_delimiter``.
+
+        Args:
+            value (str):
+
+        Raises:
+            ValueError: not enough values to unpack
+
+        Returns:
+            dict:
+        """
+        try:
+            value = super(DictSetting, self).decode_environ(value)
+        except json.decoder.JSONDecodeError:
+            key_func = self.key_type or (lambda v: v)
+            value_func = self.value_type or (lambda v: v)
+            value = {
+                key_func(k): value_func(v)
+                for k, v in [value.split(self.inner_delimiter, 2) for value in value.split(self.outer_delimiter)]
+            }
+        return value
 
 
 # Complex settings ------------------------------------------------------------
@@ -766,6 +928,22 @@ class ObjectSetting(Setting):
             current_object = getattr(current_object, obj)
         return current_object
 
+    def decode_environ(self, value):
+        """
+        Try to load JSON or return pure string, if JSONDecodeError is raised.
+
+        Args:
+            (string):
+
+        Returns:
+            string:
+        """
+        try:
+            value = super(ObjectSetting, self).decode_environ(value)
+        except json.decoder.JSONDecodeError:
+            value = str(value)
+        return value
+
 
 # Callable path settings ------------------------------------------------------
 class CallablePathSetting(ObjectSetting):
@@ -789,7 +967,11 @@ class CallablePathSetting(ObjectSetting):
 
 # Nested settings -------------------------------------------------------------
 class NestedDictSetting(DictSetting):
-    """Nested dict setting."""
+    """
+    Nested dict setting.
+
+    Environment variables are not passed to inner settings.
+    """
 
     def __init__(self, settings, *args, **kwargs):
         """
@@ -894,7 +1076,11 @@ class NestedSetting(NestedDictSetting):
 
 
 class NestedListSetting(IterableSetting):
-    """Nested list setting."""
+    """
+    Nested list setting.
+
+    Environment variables are not passed to inner settings.
+    """
 
     def __init__(self, inner_setting, *args, **kwargs):
         """
