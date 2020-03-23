@@ -56,8 +56,8 @@ version = release = u'0.6.1'
 pygments_style = 'trac'
 templates_path = ['.']
 extlinks = {
-    'issue': ('https://github.com/Genida/django-appsettings/issues/%s', '#'),
-    'pr': ('https://github.com/Genida/django-appsettings/pull/%s', 'PR #'),
+    'issue': ('https://github.com/pawamoy/django-appsettings/issues/%s', '#'),
+    'pr': ('https://github.com/pawamoy/django-appsettings/pull/%s', 'PR #'),
 }
 
 # on_rtd is whether we are on readthedocs.org

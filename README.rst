@@ -14,16 +14,16 @@ Django AppSettings
 |gitter|
 
 
-.. |travis| image:: https://travis-ci.org/Genida/django-appsettings.svg?branch=master
-    :target: https://travis-ci.org/Genida/django-appsettings/
+.. |travis| image:: https://travis-ci.org/pawamoy/django-appsettings.svg?branch=master
+    :target: https://travis-ci.org/pawamoy/django-appsettings/
     :alt: Travis Build Status
 
 .. |codacygrade| image:: https://api.codacy.com/project/badge/Grade/20c775cc36804ddda8a70eb05b64ce92
-    :target: https://www.codacy.com/app/Genida/django-appsettings/dashboard
+    :target: https://www.codacy.com/app/pawamoy/django-appsettings/dashboard
     :alt: Codacy Grade
 
 .. |codacycoverage| image:: https://api.codacy.com/project/badge/Coverage/20c775cc36804ddda8a70eb05b64ce92
-    :target: https://www.codacy.com/app/Genida/django-appsettings/dashboard
+    :target: https://www.codacy.com/app/pawamoy/django-appsettings/dashboard
     :alt: Codacy Coverage
 
 .. |version| image:: https://img.shields.io/pypi/v/django-app-settings.svg?style=flat
@@ -34,9 +34,9 @@ Django AppSettings
     :target: https://pypi.org/project/django-app-settings/
     :alt: PyPI Wheel
 
-.. |gitter| image:: https://badges.gitter.im/Genida/django-appsettings.svg
-    :target: https://gitter.im/Genida/django-appsettings
-    :alt: Join the chat at https://gitter.im/Genida/django-appsettings
+.. |gitter| image:: https://badges.gitter.im/pawamoy/django-appsettings.svg
+    :target: https://gitter.im/pawamoy/django-appsettings
+    :alt: Join the chat at https://gitter.im/pawamoy/django-appsettings
 
 
 
@@ -68,7 +68,7 @@ Development
 
 To run all the tests: ``tox``. See `CONTRIBUTING`_.
 
-.. _`CONTRIBUTING`: https://github.com/Genida/django-appsettings/blob/master/CONTRIBUTING.rst
+.. _`CONTRIBUTING`: https://github.com/pawamoy/django-appsettings/blob/master/CONTRIBUTING.rst
 
 Quick usage
 ===========

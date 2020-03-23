@@ -8,7 +8,7 @@ little bit helps, and credit will always be given.
 Bug reports
 ===========
 
-When `reporting a bug <https://github.com/Genida/django-appsettings/issues>`_ please include:
+When `reporting a bug <https://github.com/pawamoy/django-appsettings/issues>`_ please include:
 
     * Your operating system name and version.
     * Any details about your local setup that might be helpful in troubleshooting.
@@ -24,7 +24,7 @@ articles, and such.
 Feature requests and feedback
 =============================
 
-The best way to send feedback is to file an issue at https://github.com/Genida/django-appsettings/issues.
+The best way to send feedback is to file an issue at https://github.com/pawamoy/django-appsettings/issues.
 
 If you are proposing a feature:
 
@@ -37,7 +37,7 @@ Development
 
 To set up `django-appsettings` for local development:
 
-1. Fork `django-appsettings <https://github.com/Genida/django-appsettings>`_
+1. Fork `django-appsettings <https://github.com/pawamoy/django-appsettings>`_
    (look for the "Fork" button).
 2. Clone your fork locally::
 
@@ -75,7 +75,7 @@ For merging, you should:
 
 .. [1] If you don't have all the necessary python versions available locally you can rely on...
 
-       - **Travis**: it will `run the tests <https://travis-ci.org/Genida/django-appsettings/pull_requests>`_ for each change you add in the pull request.
+       - **Travis**: it will `run the tests <https://travis-ci.org/pawamoy/django-appsettings/pull_requests>`_ for each change you add in the pull request.
          It will be slower though...
 
        - **pyenv**:

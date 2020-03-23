@@ -7,7 +7,7 @@ Changelog
 
 - Fix ``transform_default`` in ``NestedListSetting``, by @stinovlas (see PR `#61`_).
 
-.. _#61: https://github.com/Genida/django-appsettings/issues/61
+.. _#61: https://github.com/pawamoy/django-appsettings/issues/61
 
 0.6.0 (2019-08-27)
 ==================
@@ -16,10 +16,10 @@ Changelog
 - Add ``NestedListSetting`` (see issue `#50`_ and PR `#53`_).
 - Rename ``NestedSetting`` to ``NestedDictSetting`` (old name is still available but deprecated).
 
-.. _#49: https://github.com/Genida/django-appsettings/issues/49
-.. _#50: https://github.com/Genida/django-appsettings/issues/50
-.. _#52: https://github.com/Genida/django-appsettings/issues/52
-.. _#53: https://github.com/Genida/django-appsettings/issues/53
+.. _#49: https://github.com/pawamoy/django-appsettings/issues/49
+.. _#50: https://github.com/pawamoy/django-appsettings/issues/50
+.. _#52: https://github.com/pawamoy/django-appsettings/issues/52
+.. _#53: https://github.com/pawamoy/django-appsettings/issues/53
 
 0.5.1 (2019-05-23)
 ==================
@@ -69,8 +69,8 @@ Going from alpha to beta status. Logic has been reworked.
 
 Many thanks to `ziima`_ for having shared good ideas and thoughts!
 
-.. _#16: https://github.com/Genida/django-appsettings/issues/16
-.. _#17: https://github.com/Genida/django-appsettings/issues/17
+.. _#16: https://github.com/pawamoy/django-appsettings/issues/16
+.. _#17: https://github.com/pawamoy/django-appsettings/issues/17
 .. _ziima: https://github.com/ziima
 
 0.2.5 (2017-06-02)
