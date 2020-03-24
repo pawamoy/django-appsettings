@@ -36,7 +36,7 @@ default_context:
     project_short_description:       'Application settings helper for Django apps.'
     prospector:                      'yes'
     pylama:                          'no'
-    python_versions:                 '2.7,3.4,3.5,3.6,3.7-dev,pypy'
+    python_versions:                 '3.4,3.5,3.6,3.7-dev,pypy'
     pyup:                            'yes'
     release_date:                    '2017-03-23'
     repo_name:                       'django-appsettings'
