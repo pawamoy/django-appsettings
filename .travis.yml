@@ -29,6 +29,7 @@ jobs:
   - {stage: test, after_success: 'tox -e codacy', python: '3.7', env: TOX_ENV=py37-django20}
   - {stage: test, after_success: 'tox -e codacy', python: '3.7', env: TOX_ENV=py37-django21}
   - {stage: test, after_success: 'tox -e codacy', python: '3.7', env: TOX_ENV=py37-django22}
+  - {stage: test, after_success: 'tox -e codacy', python: '3.8', env: TOX_ENV=py38-django22}
   - {stage: test, after_success: 'tox -e codacy', python: pypy3.5, env: TOX_ENV=pypy3-django111}
   - {stage: test, after_success: 'tox -e codacy', python: pypy3.5, env: TOX_ENV=pypy3-django20}
   - {stage: test, after_success: 'tox -e codacy', python: pypy3.5, env: TOX_ENV=pypy3-django21}
