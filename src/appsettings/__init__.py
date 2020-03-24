@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-
 """Django AppSettings package."""
 
-import six
 from django.core.exceptions import ImproperlyConfigured
 from django.core.signals import setting_changed
 
@@ -142,7 +139,7 @@ class _Metaclass(type):
         raise AttributeError("'%s' class has no attribute '%s'" % (cls.__name__, item))
 
 
-class AppSettings(six.with_metaclass(_Metaclass)):
+class AppSettings(metaclass=_Metaclass):
     """
     Base class for application settings.
 

@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 """Main test script."""
+from unittest import mock
 
-import mock
 import pytest
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.test import SimpleTestCase, override_settings
