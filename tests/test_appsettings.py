@@ -13,7 +13,7 @@ def imported_object():
 
 
 class SettingTestCase(SimpleTestCase):
-    NOT_A_CALLABLE = {}
+    NOT_A_CALLABLE = {}  # type: dict
 
     @staticmethod
     def _imported_object2():
