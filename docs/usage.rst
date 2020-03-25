@@ -305,119 +305,6 @@ The finest-grained customization can be obtained by overriding the ``validate()`
 
     setting = RegexSetting()
 
-Writing your own type checker
-'''''''''''''''''''''''''''''
-
-.. warning:: Checkers are deprecated, use validators instead.
-
-The third way to customize how the setting is checked is to create
-a new ``TypeChecker`` class:
-
-.. code:: python
-
-    import re
-    import appsettings
-
-
-    # option 1: passing a specific base_type (can be a tuple with several types)
-    class RegexTypeChecker1(appsettings.TypeChecker):
-        def __init__(self):
-            re_type = type(re.compile(r'^$'))
-            super(BooleanTypeChecker, self).__init__(base_type=(str, re_type))
-
-
-    setting1 = appsettings.Setting(checker=RegexTypeChecker1())
-
-
-    # option 2: completely overriding the __call__ method
-    class RegexTypeChecker2(appsettings.TypeChecker):
-        def __call__(self, name, value):
-            re_type = type(re.compile(r'^$'))
-            if not isinstance(value, (re_type, str)):
-                # raise whatever exception
-                raise ValueError('%s must be a a string or a compiled regex '
-                                 '(use re.compile)' % name)
-
-
-    setting2 = appsettings.Setting(checker=RegexTypeChecker2())
-
-
-    # option 3: combining both type checker and setting class
-    class RegexSetting(appsettings.Setting):
-        def __init__(
-                self, name='', default=re.compile(r'^$'), required=False,
-                prefix='', call_default=True, transform_default=False):
-            super(RegexSetting, self).__init__(
-                name=name, default=default, required=required, prefix=prefix,
-                call_default=call_default, transform_default=transform_default,
-                checker=RegexTypeChecker1())
-
-
-    setting3 = RegexSetting()
-
-
-Extending type checker and setting classes
-''''''''''''''''''''''''''''''''''''''''''
-
-.. warning:: Checkers are deprecated, use validators instead.
-
-In the previous example, we combined our own type checker to our own setting
-class. But we can extend it furthermore by adding parameters to the type
-checker, or by inheriting from previous type checkers.
-
-.. code:: python
-
-    from datetime import datetime
-    import re
-    import appsettings
-
-
-    class DateTimeTupleTypeChecker(appsettings.TupleTypeChecker):
-        def __init__(
-                self, min_length=None, max_length=None, empty=True,
-                maximum=None):
-            # here we restrict the parent TupleTypeChecker parameters
-            # by hard-coding item_type=datetime
-            super(DateTimeTupleTypeChecker, self).__init__(
-                item_type=datetime, min_length=min_length,
-                max_length=max_length, empty=empty)
-            # and here we add our custom parameters
-            self.maximum = maximum
-
-        # now we are able to extend the check
-        def __call__(self, name, value):
-            super(DateTimeTupleTypeChecker, self).__call__(name, value)
-            if isinstance(self.maximum, datetime):
-                for i, item in enumerate(value):
-                    if item > self.maximum:
-                        raise ValueError(
-                            'item %d (%s) in setting %s '
-                            'is above maximum %s' % (
-                                i, item, name, self.maximum))
-
-
-    class DateTimeTupleSetting(appsettings.Setting):
-        def __init__(
-                self, name='', default=lambda: tuple(), prefix='',
-                required=False, call_default=True, transform_default=False,
-                **checker_kwargs):
-            # we simply hook our type checker into our setting class
-            super(DateTimeTupleSetting, self).__init__(
-                name=name, default=default, required=required, prefix=prefix,
-                call_default=call_default, transform_default=transform_default,
-                checker=DateTimeTupleTypeChecker(**checker_kwargs))
-
-
-    setting = DateTimeTupleSetting(
-        name='dates_to_remember', default=lambda: (datetime.now(), ),
-        min_length=1, maximum=datetime(year=2030, month=1, day=1)
-
-
-    # and the related setting would be
-    DATES_TO_REMEMBER = (
-        datetime(year=2017, month=11, day=30),  # the day I wrote this line
-    )
-
 
 Transforming setting values
 '''''''''''''''''''''''''''
@@ -432,24 +319,12 @@ here for:
     import appsettings
 
 
-    # our type checker
-    class RegexTypeChecker(appsettings.TypeChecker):
-        def __init__(self, **kwargs):
-            re_type = type(re.compile(r'^$'))
-            # allow both str and re_type types
-            super(BooleanTypeChecker, self).__init__(base_type=(str, re_type))
-
-
     # our setting class
     class RegexSetting(appsettings.Setting):
         def __init__(
-                self, name='', default=re.compile(r'^$'), required=False,
-                prefix='', call_default=True, transform_default=False,
-                **checker_kwargs):
+                self, name='', default=re.compile(r'^$'), **kwargs):
             super(RegexSetting, self).__init__(
-                name=name, default=default, required=required, prefix=prefix,
-                call_default=call_default, transform_default=transform_default,
-                checker=RegexTypeChecker(**checker_kwargs))
+                name=name, default=default, **kwargs)
 
         def transform(self, value):
             # ensure it always returns a compiled regex

@@ -12,151 +12,6 @@ def imported_object():
     return "tests.test_appsettings.SettingTestCase._imported_object2"
 
 
-class TypeCheckerTestCase(SimpleTestCase):
-    """Type checkers tests."""
-
-    def setUp(self):
-        self.name = "setting"
-        self.message = r"setting must be %s, not %s"
-        self.message_greater = r"setting must be greater or equal %s"
-        self.message_less = r"setting must be less or equal %s"
-        self.message_longer = r"setting must be longer than %s \(or equal\)"
-        self.message_shorter = r"setting must be shorter than %s \(or equal\)"
-        self.message_empty = r"setting must not be empty"
-        self.message_items = r"All elements of setting must be %s"
-        self.message_keys = r"All keys of setting must be %s"
-        self.message_values = r"All values of setting must be %s"
-
-    def test_type_checker(self):
-        checker = appsettings.TypeChecker(int)
-        checker(self.name, 0)
-        with pytest.raises(ValueError, match=self.message % (checker.base_type, type(None))):
-            checker(self.name, None)
-
-    def test_boolean_type_checker(self):
-        checker = appsettings.BooleanTypeChecker()
-        checker(self.name, True)
-        with pytest.raises(ValueError, match=self.message % (checker.base_type, type(None))):
-            checker(self.name, None)
-
-    def test_integer_type_checker(self):
-        checker = appsettings.IntegerTypeChecker()
-        checker(self.name, 0)
-        with pytest.raises(ValueError, match=self.message % (checker.base_type, type(None))):
-            checker(self.name, None)
-
-        checker.minimum = 1
-        checker(self.name, 1)
-        with pytest.raises(ValueError, match=self.message_greater % checker.minimum):
-            checker(self.name, 0)
-
-        checker.maximum = 2
-        checker(self.name, 2)
-        with pytest.raises(ValueError, match=self.message_less % checker.maximum):
-            checker(self.name, 3)
-
-    def test_float_type_checker(self):
-        checker = appsettings.FloatTypeChecker()
-        checker(self.name, 0.0)
-        with pytest.raises(ValueError, match=self.message % (checker.base_type, type(None))):
-            checker(self.name, None)
-
-        checker.minimum = 1.1
-        checker(self.name, 1.1)
-        with pytest.raises(ValueError, match=self.message_greater % checker.minimum):
-            checker(self.name, 0.1)
-
-        checker.maximum = 2.1
-        checker(self.name, 2.1)
-        with pytest.raises(ValueError, match=self.message_less % checker.maximum):
-            checker(self.name, 3.1)
-
-    def test_string_type_checker(self):
-        checker = appsettings.StringTypeChecker()
-        checker(self.name, "")
-        with pytest.raises(ValueError, match=self.message % (checker.base_type, type(None))):
-            checker(self.name, None)
-
-        checker.min_length = 1
-        checker(self.name, "1")
-        with pytest.raises(ValueError, match=self.message_longer % checker.min_length):
-            checker(self.name, "")
-
-        checker.max_length = 2
-        checker(self.name, "12")
-        with pytest.raises(ValueError, match=self.message_shorter % checker.max_length):
-            checker(self.name, "123")
-
-        checker.min_length = None
-        checker.max_length = None
-        checker.empty = False
-        with pytest.raises(ValueError, match=self.message_empty):
-            checker(self.name, "")
-
-    def test_list_type_checker(self):
-        checker = appsettings.ListTypeChecker()
-        checker(self.name, list())
-        with pytest.raises(ValueError, match=self.message % (checker.base_type, type(None))):
-            checker(self.name, None)
-
-        checker.item_type = str
-        checker(self.name, list())  # empty
-        checker(self.name, ["ding"])  # one item
-        checker(self.name, ["ding", "dong"])  # multiple items
-        with pytest.raises(ValueError, match=self.message_items % checker.item_type):
-            checker(self.name, [None])
-        with pytest.raises(ValueError, match=self.message_items % checker.item_type):
-            checker(self.name, ["ding", None])  # not all
-
-    def test_set_type_checker(self):
-        checker = appsettings.SetTypeChecker()
-        checker(self.name, set())
-        with pytest.raises(ValueError, match=self.message % (checker.base_type, type(None))):
-            checker(self.name, None)
-
-    def test_tuple_type_checker(self):
-        checker = appsettings.TupleTypeChecker()
-        checker(self.name, tuple())
-        with pytest.raises(ValueError, match=self.message % (checker.base_type, type(None))):
-            checker(self.name, None)
-
-    def test_dict_type_checker(self):
-        checker = appsettings.DictTypeChecker()
-        checker(self.name, dict())
-        with pytest.raises(ValueError, match=self.message % (checker.base_type, type(None))):
-            checker(self.name, None)
-
-        checker.min_length = 1
-        checker(self.name, {1: 1})
-        with pytest.raises(ValueError, match=self.message_longer % checker.min_length):
-            checker(self.name, {})
-
-        checker.max_length = 2
-        checker(self.name, {1: 1, 2: 2})
-        with pytest.raises(ValueError, match=self.message_shorter % checker.max_length):
-            checker(self.name, {1: 1, 2: 2, 3: 3})
-
-        checker.min_length = None
-        checker.max_length = None
-        checker.empty = False
-        with pytest.raises(ValueError, match=self.message_empty):
-            checker(self.name, {})
-
-        checker = appsettings.DictTypeChecker(key_type=int, value_type=str)
-        checker(self.name, {0: "0"})  # one pair
-        checker(self.name, {0: "0", 1: "1"})  # multiple pairs
-        with pytest.raises(ValueError, match=self.message_keys % checker.key_type):
-            checker(self.name, {None: None})  # both key and value wrong
-        with pytest.raises(ValueError, match=self.message_keys % checker.key_type):
-            checker(self.name, {None: "0"})  # only key wrong
-        with pytest.raises(ValueError, match=self.message_values % checker.value_type):
-            checker(self.name, {0: None})  # only value wrong
-        with pytest.raises(ValueError, match=self.message_keys % checker.key_type):
-            checker(self.name, {0: "0", "1": "1"})  # not all keys
-        with pytest.raises(ValueError, match=self.message_values % checker.value_type):
-            checker(self.name, {0: "0", 1: 1})  # not all values
-
-
 class SettingTestCase(SimpleTestCase):
     NOT_A_CALLABLE = {}
 
@@ -176,7 +31,6 @@ class SettingTestCase(SimpleTestCase):
         assert setting.default_value is None
         assert setting.value is None
         assert setting.get_value() is None
-        assert setting.checker is None
         assert setting.validators == []
         setting.check()
         with pytest.raises(AttributeError, match=self.message_no_attr % setting.full_name):
@@ -262,47 +116,6 @@ class SettingTestCase(SimpleTestCase):
 
         with self.settings(INQUISITOR=mock.sentinel.lister):
             with pytest.raises(ValueError, match="Setting INQUISITOR has an invalid value:.*You're not worthy!"):
-                setting.check()
-
-    def test_setting_checker(self):
-        class Setting(appsettings.Setting):
-            def checker(self, name, value):
-                if isinstance(value, int):
-                    raise ValueError(name)
-
-        setting = Setting(name="check_test")
-        with override_settings(CHECK_TEST=0):
-            with pytest.raises(ValueError):
-                setting.check()
-        with override_settings(CHECK_TEST="ok"):
-            setting.check()
-
-        def checker(name, value):
-            if isinstance(value, str):
-                raise ValueError(name)
-
-        setting = Setting(name="check_test2", checker=checker)
-        with override_settings(CHECK_TEST2="not ok"):
-            with pytest.raises(ValueError):
-                setting.check()
-        with override_settings(CHECK_TEST2=1):
-            setting.check()
-
-        class SettingNoChecker(appsettings.Setting):
-            pass
-
-        setting = SettingNoChecker(name="check_test3")
-        with override_settings(CHECK_TEST3=list(range(1, 10))):
-            setting.check()
-
-        setting = appsettings.NestedDictSetting(
-            name="check_test3", settings=dict(inner=appsettings.Setting(checker=checker))
-        )
-        setting.check()
-        with override_settings(CHECK_TEST3={"INNER": True}):
-            setting.check()
-        with override_settings(CHECK_TEST3={"INNER": "AAA"}):
-            with pytest.raises(ValueError):
                 setting.check()
 
     def test_setting_raw_value(self):
