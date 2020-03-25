@@ -15,8 +15,6 @@ jobs:
   - {stage: quality, python: '3.5', env: TOX_ENV=check-docs-spell}
   - {stage: quality, python: '3.5', env: TOX_ENV=check-docs-link}
   - {stage: quality, python: '3.5', env: TOX_ENV=build-docs}
-  - {stage: test, after_success: 'tox -e codacy', python: '3.4', env: TOX_ENV=py34-django111}
-  - {stage: test, after_success: 'tox -e codacy', python: '3.4', env: TOX_ENV=py34-django20}
   - {stage: test, after_success: 'tox -e codacy', python: '3.5', env: TOX_ENV=py35-django111}
   - {stage: test, after_success: 'tox -e codacy', python: '3.5', env: TOX_ENV=py35-django20}
   - {stage: test, after_success: 'tox -e codacy', python: '3.5', env: TOX_ENV=py35-django21}
