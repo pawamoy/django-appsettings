@@ -25,15 +25,15 @@ class SettingTestCase(SimpleTestCase):
         self.message_no_attr = "has no attribute '%s'"
 
     def test_setting(self):
-        setting = appsettings.Setting()
-        assert setting.name == ""
-        assert setting.full_name == ""
+        setting = appsettings.Setting(name='simple')
+        assert setting.name == 'simple'
+        assert setting.full_name == 'SIMPLE'
         assert setting.default_value is None
         assert setting.value is None
         assert setting.get_value() is None
         assert setting.validators == []
         setting.check()
-        with pytest.raises(AttributeError, match=self.message_no_attr % setting.full_name):
+        with pytest.raises(AttributeError, match='SIMPLE'):
             assert setting.raw_value
 
     def test_setting_name(self):
