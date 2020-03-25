@@ -69,6 +69,34 @@ callable is called, or to prevent it, use the ``call_default`` parameter:
     Note that ``call_default`` is only used when the related setting is missing
     from the project settings!
 
+Using environment variables
+'''''''''''''''''''''''''''
+
+Nowadays it became more and more popular to read settings from the environment.
+This functionality is supported as well. If the setting is found in environment, its
+value is used and takes precedence over any value present in the settings module.
+By default, all values are parsed as JSON, see other supported values in description
+of individual setting classes.
+
+Anyway, you can override the environ value parsing on your own. It is done by the
+``decode_environ(self, value)`` method.
+
+Example
+-------
+
+.. code:: python
+
+    import os
+    from appsettings import AppSettings, StringSetting
+
+    class MySettings(AppSettings):
+        example = StringSetting()
+
+    os.environ['EXAMPLE'] = 'Example value'
+    settings = MySettings()
+    print(settings.example)  # >>> 'Example value'
+
+
 Checking the settings
 ---------------------
 
