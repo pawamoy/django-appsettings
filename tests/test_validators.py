@@ -1,8 +1,19 @@
 """Test settings validators."""
+import os
+import stat
+import tempfile
+
+import pytest
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 
-from appsettings import DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator, ValuesTypeValidator
+from appsettings import (
+    DictKeysTypeValidator,
+    DictValuesTypeValidator,
+    FileValidator,
+    TypeValidator,
+    ValuesTypeValidator,
+)
 
 
 class TypeValidatorTestCase(SimpleTestCase):
@@ -51,3 +62,62 @@ class DictValuesTypeValidatorTestCase(SimpleTestCase):
     def test_invalid(self):
         with self.assertRaisesMessage(ValidationError, "Item b's value None is not of type int."):
             DictValuesTypeValidator(int)({"a": 42, "b": None})
+
+
+class FileValidatorTestCase(SimpleTestCase):
+    """Test FileValidator."""
+
+    def test_exists_success(self):
+        with tempfile.NamedTemporaryFile() as fd:
+            FileValidator(os.F_OK)(fd.name)
+
+    def test_exists_error(self):
+        fd = tempfile.NamedTemporaryFile()
+        fd.close()
+        with pytest.raises(ValidationError, match=r"Insufficient permissions for the file .+\."):
+            FileValidator(os.F_OK)(fd.name)
+
+    def test_error_message(self):
+        fd = tempfile.NamedTemporaryFile()
+        fd.close()
+        with pytest.raises(ValidationError, match=r"My own message for .*!"):
+            FileValidator(os.F_OK, "My own message for %(value)s!")(fd.name)
+
+    def test_read_perm_success(self):
+        with tempfile.NamedTemporaryFile() as fd:
+            FileValidator(os.R_OK)(fd.name)
+
+    def test_read_perm_error(self):
+        with tempfile.NamedTemporaryFile() as fd:
+            current_perms = stat.S_IMODE(os.lstat(fd.name).st_mode)
+            os.chmod(fd.name, current_perms & ~stat.S_IRUSR)
+            with pytest.raises(ValidationError, match=r"Insufficient permissions for the file .+\."):
+                FileValidator(os.R_OK)(fd.name)
+
+    def test_write_perm_success(self):
+        with tempfile.NamedTemporaryFile() as fd:
+            FileValidator(os.W_OK)(fd.name)
+
+    def test_write_perm_error(self):
+        with tempfile.NamedTemporaryFile() as fd:
+            current_perms = stat.S_IMODE(os.lstat(fd.name).st_mode)
+            os.chmod(fd.name, current_perms & ~stat.S_IWUSR)
+            with pytest.raises(ValidationError, match=r"Insufficient permissions for the file .+\."):
+                FileValidator(os.W_OK)(fd.name)
+
+    def test_exec_perm_success(self):
+        with tempfile.NamedTemporaryFile() as fd:
+            current_perms = stat.S_IMODE(os.lstat(fd.name).st_mode)
+            os.chmod(fd.name, current_perms | stat.S_IXUSR)
+            FileValidator(os.X_OK)(fd.name)
+
+    def test_exec_perm_error(self):
+        with tempfile.NamedTemporaryFile() as fd:
+            with pytest.raises(ValidationError, match=r"Insufficient permissions for the file .+\."):
+                FileValidator(os.X_OK)(fd.name)
+
+    def test_all_permissions(self):
+        with tempfile.NamedTemporaryFile() as fd:
+            current_perms = stat.S_IMODE(os.lstat(fd.name).st_mode)
+            os.chmod(fd.name, current_perms | stat.S_IXUSR)
+            FileValidator(os.R_OK | os.W_OK | os.X_OK)(fd.name)

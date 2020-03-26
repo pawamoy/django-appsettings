@@ -7,6 +7,7 @@ from .settings import (
     BooleanSetting,
     CallablePathSetting,
     DictSetting,
+    FileSetting,
     FloatSetting,
     IntegerSetting,
     IterableSetting,
@@ -22,7 +23,13 @@ from .settings import (
     StringSetting,
     TupleSetting,
 )
-from .validators import DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator, ValuesTypeValidator
+from .validators import (
+    DictKeysTypeValidator,
+    DictValuesTypeValidator,
+    FileValidator,
+    TypeValidator,
+    ValuesTypeValidator,
+)
 
 __all__ = (
     "BooleanSetting",
@@ -30,6 +37,8 @@ __all__ = (
     "DictKeysTypeValidator",
     "DictSetting",
     "DictValuesTypeValidator",
+    "FileSetting",
+    "FileValidator",
     "FloatSetting",
     "IntegerSetting",
     "IterableSetting",
