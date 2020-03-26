@@ -10,6 +10,7 @@ jobs:
   - {stage: quality, python: '3.5', env: TOX_ENV=check-setup}
   - {stage: quality, python: '3.5', env: TOX_ENV=check-bandit}
   - {stage: quality, python: '3.5', env: TOX_ENV=check-flake8}
+  - {stage: quality, python: '3.5', env: TOX_ENV=check-mypy}
   - {stage: quality, python: '3.6', env: TOX_ENV=check-black}
   - {stage: quality, python: '3.5', env: TOX_ENV=check-isort}
   - {stage: quality, python: '3.5', env: TOX_ENV=check-docs-spell}

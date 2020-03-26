@@ -36,6 +36,9 @@ htmlcov
 # Translations
 *.mo
 
+# Mypy
+/.mypy_cache
+
 # Mr Developer
 .mr.developer.cfg
 .project

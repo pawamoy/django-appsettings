@@ -64,6 +64,7 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Utilities',
+        'Typing :: Typed',
     ],
     keywords=[
         'django', 'app', 'settings',

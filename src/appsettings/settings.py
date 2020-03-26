@@ -7,6 +7,7 @@ This module defines the settings classes.
 import importlib
 import itertools
 import warnings
+from typing import Callable, Iterable, List, Optional, cast
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -37,7 +38,7 @@ class Setting(object):
         default_validators (list of callables): Default set of validators for the setting.
     """
 
-    default_validators = ()
+    default_validators = ()  # type: Iterable[Callable]
 
     def __init__(
         self,
@@ -68,14 +69,15 @@ class Setting(object):
         self.transform_default = transform_default
         self.required = required
         self.prefix = prefix
-        self.parent_setting = None
+        self.parent_setting = None  # type: Optional[Setting]
         self.nested_list_index = None
         self.validators = list(itertools.chain(self.default_validators, validators))
 
     def _reraise_if_required(self, err):
         if self.required:
             if isinstance(err, KeyError):
-                raise KeyError("%s setting is missing required item %s" % (self.parent_setting.full_name, err))
+                raise KeyError(
+                    "%s setting is missing required item %s" % (cast(Setting, self.parent_setting).full_name, err))
             else:
                 raise AttributeError("%s setting is required and %s" % (self.full_name, err))
 
@@ -170,7 +172,7 @@ class Setting(object):
 
     def run_validators(self, value):
         """Run the validators on the setting value."""
-        errors = []
+        errors = []  # type: List[str]
         for validator in self.validators:
             try:
                 validator(value)
@@ -540,7 +542,7 @@ class ListSetting(IterableSetting):
 
     default_validators = (TypeValidator(list),)
 
-    def __init__(self, name="", default=list, *args, **kwargs):
+    def __init__(self, name="", default=list, **kwargs):
         """
         Initialization method.
 
@@ -558,7 +560,7 @@ class ListSetting(IterableSetting):
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(ListSetting, self).__init__(name=name, default=default, *args, **kwargs)
+        super(ListSetting, self).__init__(name=name, default=default, **kwargs)
 
 
 class SetSetting(IterableSetting):
@@ -566,7 +568,7 @@ class SetSetting(IterableSetting):
 
     default_validators = (TypeValidator(set),)
 
-    def __init__(self, name="", default=set, *args, **kwargs):
+    def __init__(self, name="", default=set, **kwargs):
         """
         Initialization method.
 
@@ -584,7 +586,7 @@ class SetSetting(IterableSetting):
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(SetSetting, self).__init__(name=name, default=default, *args, **kwargs)
+        super(SetSetting, self).__init__(name=name, default=default, **kwargs)
 
 
 class TupleSetting(IterableSetting):
@@ -592,7 +594,7 @@ class TupleSetting(IterableSetting):
 
     default_validators = (TypeValidator(tuple),)
 
-    def __init__(self, name="", default=tuple, *args, **kwargs):
+    def __init__(self, name="", default=tuple, **kwargs):
         """
         Initialization method.
 
@@ -610,7 +612,7 @@ class TupleSetting(IterableSetting):
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(TupleSetting, self).__init__(name=name, default=default, *args, **kwargs)
+        super(TupleSetting, self).__init__(name=name, default=default, **kwargs)
 
 
 # Dict settings ---------------------------------------------------------------
@@ -849,7 +851,7 @@ class NestedDictSetting(DictSetting):
             ValueError: (or other Exception) if the raw value is invalid.
         """
         super(NestedDictSetting, self).check()
-        errors = []
+        errors = []  # type: List[str]
         try:
             raw_value = self.raw_value
         except AttributeError:
@@ -947,7 +949,7 @@ class NestedListSetting(IterableSetting):
         except (AttributeError, KeyError) as err:
             self._reraise_if_required(err)
         else:
-            errors = []
+            errors = []  # type: List[str]
             for index, item in enumerate(value):
                 try:
                     self.inner_setting.nested_list_index = index
