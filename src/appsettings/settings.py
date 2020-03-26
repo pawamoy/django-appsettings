@@ -10,7 +10,7 @@ import warnings
 from typing import Callable, Iterable, List, Optional, cast
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.validators import MaxLengthValidator, MaxValueValidator, MinLengthValidator, MinValueValidator
 
 from .validators import DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator, ValuesTypeValidator
@@ -76,10 +76,10 @@ class Setting(object):
     def _reraise_if_required(self, err):
         if self.required:
             if isinstance(err, KeyError):
-                raise KeyError(
-                    "%s setting is missing required item %s" % (cast(Setting, self.parent_setting).full_name, err))
+                msg = "%s setting is missing required item %s" % (cast(Setting, self.parent_setting).full_name, err)
             else:
-                raise AttributeError("%s setting is required and %s" % (self.full_name, err))
+                msg = "%s setting is required and %s" % (self.full_name, err)
+            raise ImproperlyConfigured(msg)
 
     @property
     def full_name(self):
@@ -134,6 +134,9 @@ class Setting(object):
 
         Returns:
             object: the transformed raw value.
+
+        Raises:
+            ImproperlyConfigured: The setting doesn't have a valid value.
         """
         return self.get_value()
 
@@ -147,6 +150,9 @@ class Setting(object):
 
         Returns:
             object: the transformed raw value.
+
+        Raises:
+            ImproperlyConfigured: The setting doesn't have a valid value.
         """
         try:
             value = self.raw_value
@@ -186,8 +192,7 @@ class Setting(object):
         Validate the setting value.
 
         Raises:
-            AttributeError: if the setting is missing and required.
-            ValueError: if the raw value is invalid.
+            ImproperlyConfigured: The setting doesn't have a valid value.
         """
         try:
             value = self.raw_value
@@ -198,7 +203,7 @@ class Setting(object):
                 self.validate(value)
                 self.run_validators(value)
             except ValidationError as error:
-                raise ValueError("Setting {} has an invalid value: {}".format(self.full_name, error))
+                raise ImproperlyConfigured("Setting {} has an invalid value: {}".format(self.full_name, error))
 
     def transform(self, value):
         """

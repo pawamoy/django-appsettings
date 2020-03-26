@@ -183,9 +183,8 @@ class AppSettings(metaclass=_Metaclass):
         for setting in cls.settings.values():
             try:
                 setting.check()
-            # pylama:ignore=W0703
-            except Exception as e:
-                exceptions.append(str(e))
+            except ImproperlyConfigured as error:
+                exceptions.append(str(error))
         if exceptions:
             raise ImproperlyConfigured("\n".join(exceptions))
 

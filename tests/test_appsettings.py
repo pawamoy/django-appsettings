@@ -57,13 +57,14 @@ class SettingTestCase(SimpleTestCase):
 
     def test_setting_required(self):
         setting = appsettings.Setting(name="setting", prefix="custom_", required=True, default=True)
-        with pytest.raises(AttributeError, match=self.message_required % setting.full_name):
+        with pytest.raises(ImproperlyConfigured, match=self.message_required % setting.full_name):
             assert setting.value
         assert setting.default_value
 
         setting.parent_setting = appsettings.NestedDictSetting(settings={}, name="parent_setting")
         with override_settings(PARENT_SETTING={}):
-            with pytest.raises(KeyError, match=self.message_missing_item % setting.parent_setting.full_name):
+            with pytest.raises(ImproperlyConfigured,
+                               match=self.message_missing_item % setting.parent_setting.full_name):
                 assert setting.value
 
     def test_setting_transform(self):
@@ -101,7 +102,8 @@ class SettingTestCase(SimpleTestCase):
         setting = appsettings.Setting(name="INQUISITOR", validators=(validator,))
 
         with self.settings(INQUISITOR=mock.sentinel.lister):
-            with pytest.raises(ValueError, match="Setting INQUISITOR has an invalid value:.*You're not worthy!"):
+            with pytest.raises(ImproperlyConfigured,
+                               match="Setting INQUISITOR has an invalid value:.*You're not worthy!"):
                 setting.check()
 
         assert validator.mock_calls == [mock.call(mock.sentinel.lister)]
@@ -115,7 +117,8 @@ class SettingTestCase(SimpleTestCase):
         setting = TestSetting(name="INQUISITOR")
 
         with self.settings(INQUISITOR=mock.sentinel.lister):
-            with pytest.raises(ValueError, match="Setting INQUISITOR has an invalid value:.*You're not worthy!"):
+            with pytest.raises(ImproperlyConfigured,
+                               match="Setting INQUISITOR has an invalid value:.*You're not worthy!"):
                 setting.check()
 
     def test_setting_raw_value(self):
@@ -219,10 +222,10 @@ class SettingTestCase(SimpleTestCase):
             setting.check()
             assert setting.value is imported_object
         with override_settings(CALLABLE_PATH="tests.test_appsettings.SettingTestCase.NOT_A_CALLABLE"):
-            with pytest.raises(ValueError):
+            with pytest.raises(ImproperlyConfigured):
                 setting.check()
         with override_settings(CALLABLE_PATH=None):
-            with pytest.raises(ValueError):
+            with pytest.raises(ImproperlyConfigured):
                 setting.check()
 
     def test_nested_setting(self):
@@ -253,7 +256,7 @@ class SettingTestCase(SimpleTestCase):
             setting.check()
             assert setting.value == (0, 1, 2)
         with override_settings(SETTING=[0, "1", 2]):
-            with pytest.raises(ValueError):
+            with pytest.raises(ImproperlyConfigured):
                 setting.check()
 
         setting = appsettings.NestedListSetting(
@@ -288,7 +291,7 @@ class SettingTestCase(SimpleTestCase):
             setting.check()
             assert setting.value == ((1, 2, 3), (4, 5))
         with override_settings(SETTING=[[1, 2, 3], ["x", 5]]):
-            with pytest.raises(ValueError):
+            with pytest.raises(ImproperlyConfigured):
                 setting.check()
 
         setting = appsettings.NestedListSetting(
@@ -333,7 +336,7 @@ class SettingTestCase(SimpleTestCase):
             setting.check()
             assert setting.value == {"select": (2,)}
         with override_settings(SETTING={"PICK": ["xyz"]}):
-            with pytest.raises(ValueError):
+            with pytest.raises(ImproperlyConfigured):
                 setting.check()
 
     def test_nested_dict_setting_not_required_anything(self):
@@ -366,7 +369,7 @@ class SettingTestCase(SimpleTestCase):
         )
 
         # Not passed anything
-        with pytest.raises(AttributeError):
+        with pytest.raises(ImproperlyConfigured):
             outer_setting.check()
 
         # Pass outer setting
@@ -393,7 +396,7 @@ class SettingTestCase(SimpleTestCase):
 
         # Pass outer setting
         with override_settings(OUTER_SETTING={"INNER_FAKE_SETTING": "Fake setting value"}):
-            with pytest.raises(KeyError):
+            with pytest.raises(ImproperlyConfigured):
                 outer_setting.check()
 
         # Pass inner setting as well
@@ -408,12 +411,12 @@ class SettingTestCase(SimpleTestCase):
         )
 
         # Not passed anything
-        with pytest.raises(AttributeError):
+        with pytest.raises(ImproperlyConfigured):
             outer_setting.check()
 
         # Pass outer setting
         with override_settings(OUTER_SETTING={"INNER_FAKE_SETTING": "Fake setting value"}):
-            with pytest.raises(KeyError):
+            with pytest.raises(ImproperlyConfigured):
                 outer_setting.check()
 
         # Pass inner setting as well

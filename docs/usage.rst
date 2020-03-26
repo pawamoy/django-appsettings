@@ -114,8 +114,6 @@ You can also check each setting individually, for example:
     for setting in AppSettings.settings.values():
         setting.check()
 
-If the setting's value is invalid, it will raise an exception
-(usually ``ValueError``).
 
 Using the settings in your code
 -------------------------------
