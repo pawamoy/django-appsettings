@@ -349,8 +349,7 @@ here for:
     class RegexSetting(appsettings.Setting):
         def __init__(
                 self, name='', default=re.compile(r'^$'), **kwargs):
-            super(RegexSetting, self).__init__(
-                name=name, default=default, **kwargs)
+            super().__init__(name=name, default=default, **kwargs)
 
         def transform(self, value):
             # ensure it always returns a compiled regex
