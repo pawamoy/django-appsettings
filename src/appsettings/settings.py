@@ -271,7 +271,7 @@ class BooleanSetting(Setting):
             transform_default (bool): whether to transform the default value.
             validators (list of callables): list of additional validators to use.
         """
-        super(BooleanSetting, self).__init__(
+        super().__init__(
             name=name,
             default=default,
             required=required,
@@ -334,7 +334,7 @@ class IntegerSetting(Setting):
             minimum (int): a minimum value (included).
             maximum (int): a maximum value (included).
         """
-        super(IntegerSetting, self).__init__(
+        super().__init__(
             name=name,
             default=default,
             required=required,
@@ -377,7 +377,7 @@ class PositiveIntegerSetting(IntegerSetting):
             validators (list of callables): list of additional validators to use.
             maximum (int): a maximum value (included).
         """
-        super(PositiveIntegerSetting, self).__init__(
+        super().__init__(
             name=name,
             default=default,
             required=required,
@@ -422,7 +422,7 @@ class FloatSetting(IntegerSetting):
             minimum (int): a minimum value (included).
             maximum (int): a maximum value (included).
         """
-        super(FloatSetting, self).__init__(
+        super().__init__(
             name=name,
             default=default,
             required=required,
@@ -463,7 +463,7 @@ class PositiveFloatSetting(FloatSetting):
             validators (list of callables): list of additional validators to use.
             maximum (int): a maximum value (included).
         """
-        super(PositiveFloatSetting, self).__init__(
+        super().__init__(
             name=name,
             default=default,
             required=required,
@@ -513,7 +513,7 @@ class IterableSetting(Setting):
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(IterableSetting, self).__init__(
+        super().__init__(
             name=name,
             default=default,
             required=required,
@@ -548,7 +548,7 @@ class IterableSetting(Setting):
             Iterable:
         """
         try:
-            value = super(IterableSetting, self).decode_environ(value)
+            value = super().decode_environ(value)
         except json.decoder.JSONDecodeError:
             split_value = value.split(self.delimiter)
             item_convert_func = self.item_type or (lambda v: v)
@@ -590,7 +590,7 @@ class StringSetting(Setting):
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(StringSetting, self).__init__(
+        super().__init__(
             name=name,
             default=default,
             required=required,
@@ -621,7 +621,7 @@ class StringSetting(Setting):
             string:
         """
         try:
-            value = super(StringSetting, self).decode_environ(value)
+            value = super().decode_environ(value)
         except json.decoder.JSONDecodeError:
             value = str(value)
         return value
@@ -650,7 +650,7 @@ class ListSetting(IterableSetting):
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(ListSetting, self).__init__(name=name, default=default, **kwargs)
+        super().__init__(name=name, default=default, **kwargs)
 
     def decode_environ(self, value):
         """
@@ -664,7 +664,7 @@ class ListSetting(IterableSetting):
         Returns:
             list:
         """
-        return list(super(ListSetting, self).decode_environ(value))
+        return list(super().decode_environ(value))
 
 
 class SetSetting(IterableSetting):
@@ -690,7 +690,7 @@ class SetSetting(IterableSetting):
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(SetSetting, self).__init__(name=name, default=default, **kwargs)
+        super().__init__(name=name, default=default, **kwargs)
 
     def decode_environ(self, value):
         """
@@ -704,7 +704,7 @@ class SetSetting(IterableSetting):
         Returns:
             set:
         """
-        return set(super(SetSetting, self).decode_environ(value))
+        return set(super().decode_environ(value))
 
 
 class TupleSetting(IterableSetting):
@@ -730,7 +730,7 @@ class TupleSetting(IterableSetting):
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(TupleSetting, self).__init__(name=name, default=default, **kwargs)
+        super().__init__(name=name, default=default, **kwargs)
 
     def decode_environ(self, value):
         """
@@ -744,7 +744,7 @@ class TupleSetting(IterableSetting):
         Returns:
             tuple:
         """
-        return tuple(super(TupleSetting, self).decode_environ(value))
+        return tuple(super().decode_environ(value))
 
 
 # Dict settings ---------------------------------------------------------------
@@ -790,7 +790,7 @@ class DictSetting(Setting):
             max_length (int): Noop. Deprecated.
             empty (bool): whether empty iterable is allowed. Deprecated in favor of MinLengthValidator.
         """
-        super(DictSetting, self).__init__(
+        super().__init__(
             name=name,
             default=default,
             required=required,
@@ -832,7 +832,7 @@ class DictSetting(Setting):
             dict:
         """
         try:
-            value = super(DictSetting, self).decode_environ(value)
+            value = super().decode_environ(value)
         except json.decoder.JSONDecodeError:
             key_func = self.key_type or (lambda v: v)
             value_func = self.value_type or (lambda v: v)
@@ -882,7 +882,7 @@ class ObjectSetting(Setting):
             max_length (int): Noop. Deprecated.
             empty (bool): Noop. Deprecated.
         """
-        super(ObjectSetting, self).__init__(
+        super().__init__(
             name=name,
             default=default,
             required=required,
@@ -946,7 +946,7 @@ class ObjectSetting(Setting):
             string:
         """
         try:
-            value = super(ObjectSetting, self).decode_environ(value)
+            value = super().decode_environ(value)
         except json.decoder.JSONDecodeError:
             value = str(value)
         return value
@@ -966,7 +966,7 @@ class CallablePathSetting(ObjectSetting):
 
         We disregard the raw value and use transformed value instead.
         """
-        super(CallablePathSetting, self).validate(value)
+        super().validate(value)
         transformed_value = self.value
         if not callable(transformed_value):
             raise ValidationError("Value %(value)s is not a callable.", params={"value": transformed_value})
@@ -1000,7 +1000,7 @@ class NestedDictSetting(DictSetting):
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(NestedDictSetting, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         for subname, subsetting in settings.items():
             if subsetting.name == "":
                 subsetting.name = subname
@@ -1037,7 +1037,7 @@ class NestedDictSetting(DictSetting):
             AttributeError: if the setting is missing and required.
             ValueError: (or other Exception) if the raw value is invalid.
         """
-        super(NestedDictSetting, self).check()
+        super().check()
         errors = []  # type: List[str]
         try:
             raw_value = self.raw_value
@@ -1078,7 +1078,7 @@ class NestedSetting(NestedDictSetting):
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(NestedSetting, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         warnings.warn("NestedSetting is deprecated in favor of NestedDictSetting.", DeprecationWarning)
 
 
@@ -1110,7 +1110,7 @@ class NestedListSetting(IterableSetting):
             max_length (int): maximum length of the iterable (included).
             empty (bool): whether empty iterable is allowed. Deprecated in favor of min_length.
         """
-        super(NestedListSetting, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if not inner_setting.name:
             inner_setting.name = self.name
         inner_setting.parent_setting = self
@@ -1134,7 +1134,7 @@ class NestedListSetting(IterableSetting):
 
     def check(self):
         """Check the nested list setting itself and all its items."""
-        super(NestedListSetting, self).check()
+        super().check()
         try:
             value = self.raw_value
         except (AttributeError, KeyError) as err:
