@@ -435,6 +435,25 @@ class CallablePathSettingTestCase(SimpleTestCase):
 class NestedDictSettingTestCase(SimpleTestCase):
     """NestedDictSetting tests."""
 
+    def test_nested_setting(self):
+        setting = appsettings.NestedDictSetting(settings=dict())
+        assert setting.value == {}
+        setting.transform_default = True
+        assert setting.value == {}
+
+        setting = appsettings.NestedDictSetting(
+            name="setting",
+            default={},
+            settings=dict(
+                bool1=appsettings.BooleanSetting(default=False),
+                bool2=appsettings.BooleanSetting(name="bool3", default=True),
+            ),
+        )
+        assert setting.value == {}
+
+        with override_settings(SETTING={"BOOL3": False}):
+            assert setting.value == {"bool1": False, "bool2": False}
+
     def test_nested_dict_setting_not_required_anything(self):
         outer_setting = appsettings.NestedDictSetting(
             name="outer_setting", settings=dict(inner_setting=appsettings.StringSetting(default="Default"))
@@ -539,30 +558,7 @@ class NestedDictSettingTestCase(SimpleTestCase):
         assert setting.value["b"] == "B"
 
 
-class NestedSettingTestCase(SimpleTestCase):
-    """NestedSetting tests."""
-
-    def test_nested_setting(self):
-        setting = appsettings.NestedDictSetting(settings=dict())
-        assert setting.value == {}
-        setting.transform_default = True
-        assert setting.value == {}
-
-        setting = appsettings.NestedDictSetting(
-            name="setting",
-            default={},
-            settings=dict(
-                bool1=appsettings.BooleanSetting(default=False),
-                bool2=appsettings.BooleanSetting(name="bool3", default=True),
-            ),
-        )
-        assert setting.value == {}
-
-        with override_settings(SETTING={"BOOL3": False}):
-            assert setting.value == {"bool1": False, "bool2": False}
-
-
-class NestedListSetting(SimpleTestCase):
+class NestedListSettingTestCase(SimpleTestCase):
     """NestedListSetting tests."""
 
     def test_nested_list_setting(self):
