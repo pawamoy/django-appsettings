@@ -1,5 +1,7 @@
 """Main test script."""
 import os
+import tempfile
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -652,6 +654,32 @@ class NestedListSettingTestCase(SimpleTestCase):
         with override_settings(SETTING={"PICK": ["xyz"]}):
             with pytest.raises(ImproperlyConfigured):
                 setting.check()
+
+
+class FileSettingTestCase(SimpleTestCase):
+    def test_file_setting_string(self):
+        setting = appsettings.FileSetting(name="file")
+        with tempfile.NamedTemporaryFile() as fd:
+            with override_settings(FILE=fd.name):
+                setting.check()
+                assert isinstance(setting.value, Path)
+                assert setting.value.samefile(fd.name)
+
+    def test_file_setting_path(self):
+        setting = appsettings.FileSetting(name="file")
+        with tempfile.NamedTemporaryFile() as fd:
+            with override_settings(FILE=Path(fd.name)):
+                setting.check()
+                assert isinstance(setting.value, Path)
+                assert setting.value.samefile(fd.name)
+
+    def test_file_setting_with_directory(self):
+        setting = appsettings.FileSetting(name="file")
+        with tempfile.TemporaryDirectory() as td_name:
+            with override_settings(FILE=Path(td_name)):
+                setting.check()
+                assert isinstance(setting.value, Path)
+                assert setting.value.samefile(td_name)
 
 
 class AppSettingsTestCase(SimpleTestCase):

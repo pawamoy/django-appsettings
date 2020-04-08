@@ -22,6 +22,9 @@ API reference
 .. autoclass:: appsettings.PositiveIntegerSetting
     :members:
 
+.. autoclass:: appsettings.FileSetting
+    :members:
+
 .. autoclass:: appsettings.FloatSetting
     :members:
 

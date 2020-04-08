@@ -9,13 +9,20 @@ import itertools
 import json
 import os
 import warnings
+from pathlib import Path
 from typing import Callable, Iterable, List, Optional, cast
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.validators import MaxLengthValidator, MaxValueValidator, MinLengthValidator, MinValueValidator
 
-from .validators import DictKeysTypeValidator, DictValuesTypeValidator, TypeValidator, ValuesTypeValidator
+from .validators import (
+    DictKeysTypeValidator,
+    DictValuesTypeValidator,
+    FileValidator,
+    TypeValidator,
+    ValuesTypeValidator,
+)
 
 
 class Setting(object):
@@ -1153,3 +1160,57 @@ class NestedListSetting(IterableSetting):
     def transform(self, value):
         """Transform each item in the list."""
         return tuple(self.inner_setting.transform(item) for item in value)
+
+
+class FileSetting(Setting):
+    """
+    File setting.
+
+    Value of this setting is a pathlib.Path instance.
+    """
+
+    def __init__(
+        self,
+        name="",
+        default=None,
+        required=False,
+        prefix="",
+        call_default=True,
+        transform_default=False,
+        validators=(),
+        mode=None,
+    ):
+        """
+        Initialization method.
+
+        Note that attribute ``mode`` is used in ``FileValidator``. For more information check its documentation.
+
+        Args:
+            name (str): the name of the setting.
+            default (object): default value given to the setting.
+            required (bool): whether the setting is required or not.
+            prefix (str):
+                the setting's prefix (overrides ``AppSettings.Meta`` prefix).
+            call_default (bool): whether to call the default (if callable).
+            transform_default (bool): whether to transform the default value.
+            validators (list of callables): list of additional validators to use.
+            mode (optional int): Required permission for the file. None means no validation (f.e. file does not exist
+                yet), other values might consist of inclusive OR between F_OK, R_OK, W_OK and X_OK constants. When
+                checking read, write or execute permission, file existence (F_OK) is implicitly required. For more
+                information check ``os.access`` documentation (https://docs.python.org/3/library/os.html#os.access).
+        """
+        super().__init__(
+            name=name,
+            default=default,
+            required=required,
+            prefix=prefix,
+            call_default=call_default,
+            transform_default=transform_default,
+            validators=validators,
+        )
+        if mode is not None:
+            self.validators.append(FileValidator(mode))
+
+    def transform(self, value):
+        """Transform value to Path instance."""
+        return Path(super().transform(value))
