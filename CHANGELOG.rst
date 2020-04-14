@@ -2,6 +2,20 @@
 Changelog
 =========
 
+0.7.0 (2020-04-14)
+==================
+
+- Read setting values from environment variables.
+- Add ``FileSetting``.
+- Fix bug causing ``NestedDictSetting`` to be always required.
+- Add support for python 3.8 and Django 3.0.
+- Drop support for python 2.7 and 3.4.
+- Drop deprecated type checkers.
+- Add type annotations.
+- Raise ``ImproperlyConfigured`` from ``Setting.check`` for all errors in a setting.
+- Move repository to https://github.com/pawamoy/django-appsettings.
+- Clean tests.
+
 0.6.1 (2020-03-04)
 ==================
 
