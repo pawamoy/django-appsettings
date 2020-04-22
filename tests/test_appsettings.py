@@ -2,6 +2,7 @@
 import os
 import tempfile
 from pathlib import Path
+from typing import Dict, cast
 from unittest import mock
 
 import pytest
@@ -772,6 +773,73 @@ class AppSettingsTestCase(SimpleTestCase):
 
         assert "my_int" not in appconf._cache
         assert appconf.my_int == 0
+
+    @mock.patch.dict(os.environ, {"ONE": "Env_1", "TWO": "Env_2", "THREE": "Env_3"})
+    def test_environ_values_invalidation(self):
+        class AppConf(appsettings.AppSettings):
+            one = appsettings.StringSetting()
+            two = appsettings.StringSetting()
+            three = appsettings.StringSetting()
+            four = appsettings.StringSetting(default="Def_4")
+
+        appconf = AppConf()
+        with override_settings(ONE="One", TWO="Two"):
+            assert "ONE" not in os.environ
+            assert "__DAP_ONE" in os.environ
+            assert appconf.one == "One"
+
+            assert "TWO" not in os.environ
+            assert "__DAP_TWO" in os.environ
+            assert appconf.two == "Two"
+
+            assert "THREE" in os.environ
+            assert "__DAP_THREE" not in os.environ
+            assert appconf.three == "Env_3"
+
+            assert "FOUR" not in os.environ
+            assert "__DAP_FOUR" not in os.environ
+            assert appconf.four == "Def_4"
+
+        assert "ONE" in os.environ
+        assert "__DAP_ONE" not in os.environ
+        assert appconf.one == "Env_1"
+
+        assert "TWO" in os.environ
+        assert "__DAP_TWO" not in os.environ
+        assert appconf.two == "Env_2"
+
+        assert "THREE" in os.environ
+        assert "__DAP_THREE" not in os.environ
+        assert appconf.three == "Env_3"
+
+        assert "FOUR" not in os.environ
+        assert "__DAP_FOUR" not in os.environ
+        assert appconf.four == "Def_4"
+
+    @mock.patch.dict(os.environ, {"SETTING": "ONE=Env_1 TWO=Env_2"})
+    def test_environ_nested_setting_invalidation(self):
+        class AppConf(appsettings.AppSettings):
+            setting = cast(
+                Dict[str, str],
+                appsettings.NestedDictSetting(
+                    settings=dict(
+                        one=appsettings.StringSetting(required=True), two=appsettings.StringSetting(default="Def_2"),
+                    ),
+                    required=True,
+                ),
+            )
+
+        appconf = AppConf()
+        assert appconf.setting["one"] == "Env_1"
+        assert appconf.setting["two"] == "Env_2"
+        with override_settings(SETTING={"ONE": "One"}):
+            assert "SETTING" not in os.environ
+            assert "__DAP_SETTING" in os.environ
+            assert appconf.setting["one"] == "One"
+            assert appconf.setting["two"] == "Def_2"
+
+        assert appconf.setting["one"] == "Env_1"
+        assert appconf.setting["two"] == "Env_2"
 
     def test_check(self):
         assert appsettings.AppSettings.check() is None
