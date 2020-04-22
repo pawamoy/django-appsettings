@@ -1,4 +1,5 @@
 """Django AppSettings package."""
+import os
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.signals import setting_changed
@@ -139,17 +140,20 @@ class AppSettings(metaclass=_Metaclass):
 
     """
 
+    OS_ENVIRON_OVERRIDE_PREFIX = "__DAP_"  # type: str
+
     def __init__(self):
         """
         Initialization method.
 
-        The ``invalidate_cache`` method will be connected to the Django
-        ``setting_changed`` signal in this method, with the dispatch UID
-        being the id of this very object (``id(self)``).
+        The ``invalidate_cache`` and ``manage_environ_invalidation`` methods will be connected to the Django
+        ``setting_changed`` signal in this method, with the dispatch UIDs being method initials and the id of this very
+        object (``id(self)``).
         """
         if self.__class__ == AppSettings:
             raise RuntimeError("Do not use AppSettings class as itself, " "use it as a base for subclasses")
-        setting_changed.connect(self.invalidate_cache, dispatch_uid=id(self))
+        setting_changed.connect(self.invalidate_cache, dispatch_uid="ic" + str(id(self)))
+        setting_changed.connect(self.manage_environ_invalidation, dispatch_uid="mei" + str(id(self)))
         self._cache = {}
 
     def __getattr__(self, item):
@@ -196,6 +200,26 @@ class AppSettings(metaclass=_Metaclass):
                 exceptions.append(str(error))
         if exceptions:
             raise ImproperlyConfigured("\n".join(exceptions))
+
+    def manage_environ_invalidation(self, *, setting, enter, **kwargs):
+        """
+        Manage keys and values in ``os.environ`` on setting change.
+
+        Environ values take precedence over ``django.conf`` values by default. But when we override a setting, we want
+        to take the ``django.conf`` value and therefore we need to remove corresponding key from the ``os.environ``.
+        To be able to restore the original value later, we add a prefix (OS_ENVIRON_OVERRIDE_PREFIX) to the key and then
+        just remove the prefix.
+        """
+        for item in self.settings.keys():
+            if self.settings[item].full_name == setting:
+                setting_override_key = self.OS_ENVIRON_OVERRIDE_PREFIX + setting
+                if enter and setting in os.environ:
+                    os.environ[setting_override_key] = os.environ[setting]
+                    del os.environ[setting]
+                elif not enter and setting_override_key in os.environ:
+                    os.environ[setting] = os.environ[setting_override_key]
+                    del os.environ[setting_override_key]
+                break
 
     def invalidate_cache(self, **kwargs):
         """Invalidate cache. Run when receive ``setting_changed`` signal."""
