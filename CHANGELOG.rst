@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.7.1 (2020-05-28)
+==================
+
+- Ignore environment variables when using ``override_settings``.
+- Don't announce type annotations.
+
 0.7.0 (2020-04-14)
 ==================
 
