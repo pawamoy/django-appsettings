@@ -560,6 +560,51 @@ class NestedDictSettingTestCase(SimpleTestCase):
         assert setting.value["a"] == "A"
         assert setting.value["b"] == "B"
 
+    def test_nested_dict_nested_dict(self):
+        setting = appsettings.NestedDictSetting(
+            settings=dict(
+                sub=appsettings.NestedDictSetting(settings=dict(value=appsettings.Setting(name="value")), name="sub")
+            ),
+            name="setting",
+        )
+
+        setting.check()
+        assert setting.value == {}
+
+        with override_settings(SETTING={}):
+            setting.check()
+            assert setting.value == {"sub": {}}
+
+        with override_settings(SETTING={"SUB": {}}):
+            setting.check()
+            assert setting.value == {"sub": {"value": None}}
+
+        with override_settings(SETTING={"SUB": {"VALUE": "Value"}}):
+            setting.check()
+            assert setting.value == {"sub": {"value": "Value"}}
+
+    def test_nested_dict_nested_list(self):
+        setting = appsettings.NestedDictSetting(
+            settings=dict(
+                sub=appsettings.NestedListSetting(
+                    inner_setting=appsettings.Setting(name="value", default=None), name="sub", default=None
+                )
+            ),
+            name="setting",
+            default=None,
+        )
+
+        setting.check()
+        assert setting.value is None
+
+        with override_settings(SETTING={}):
+            setting.check()
+            assert setting.value == {"sub": None}
+
+        with override_settings(SETTING={"SUB": ["hello"]}):
+            setting.check()
+            assert setting.value == {"sub": ("hello",)}
+
 
 class NestedListSettingTestCase(SimpleTestCase):
     """NestedListSetting tests."""

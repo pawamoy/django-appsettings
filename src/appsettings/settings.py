@@ -1048,7 +1048,7 @@ class NestedDictSetting(DictSetting):
         errors = []  # type: List[str]
         try:
             raw_value = self.raw_value
-        except AttributeError:
+        except (AttributeError, KeyError):
             # If not required and not passed
             pass
         else:
