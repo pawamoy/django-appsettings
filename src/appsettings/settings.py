@@ -137,6 +137,7 @@ class Setting(object):
         elif isinstance(self.parent_setting, NestedListSetting):
             return self.parent_setting.raw_value[self.nested_list_index]
         elif self.full_name in os.environ:
+            warnings.warn("Loading setting values from environment is deprecated.", DeprecationWarning)
             return self.decode_environ(os.environ[self.full_name])
         else:
             return getattr(settings, self.full_name)
