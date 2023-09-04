@@ -239,8 +239,8 @@ different configurations:
 
         settings = MySettings()
         print(settings.api)  # {'server': 'localhost', 'port': 42}
-        print(setting.api['server'])  # 'localhost'
-        print(setting.api['port'])  # 42
+        print(settings.api['server'])  # 'localhost'
+        print(settings.api['port'])  # 42
 
 As you can see, value of nested dict setting is represented as a dictionary with
 values of all the subsettings included. If you define other items in the
