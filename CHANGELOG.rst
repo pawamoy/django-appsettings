@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Unreleased
+==========
+
+- Deprecate loding setting values from environment.
+
+
 0.7.1 (2020-05-28)
 ==================
 

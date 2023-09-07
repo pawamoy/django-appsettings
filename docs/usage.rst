@@ -72,6 +72,10 @@ callable is called, or to prevent it, use the ``call_default`` parameter:
 Using environment variables
 '''''''''''''''''''''''''''
 
+**Usage of environment variables is deprecated and will be removed in future release.**
+We recommend using `django-environ <https://pypi.org/project/django-environ/>`_. This
+guarantees more predictable results.
+
 Nowadays it became more and more popular to read settings from the environment.
 This functionality is supported as well. If the setting is found in environment, its
 value is used and takes precedence over any value present in the settings module.
