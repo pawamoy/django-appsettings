@@ -5,8 +5,14 @@ Changelog
 Unreleased
 ==========
 
-- Deprecate loding setting values from environment.
 
+0.7.2 (2023-09-07)
+==================
+
+- Deprecate loding setting values from environment (#98 by @stinovlas)
+- Fix optional nested dict setting (#92 by @rastytheamateur)
+- Fix typos in ``usage.rst`` (#102 by @oto-stefan)
+- Fix docs build (#100 by @stinovlas)
 
 0.7.1 (2020-05-28)
 ==================
